@@ -1,6 +1,16 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <iostream>
+
+void errorif(bool condition, const char *errmsg)
+{
+	if (condition)
+	{
+		perror(errmsg);
+		exit(EXIT_FAILURE);
+	}
+}
 
 int main()
 {

@@ -3,6 +3,15 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+void errorif(bool condition, const char *errmsg)
+{
+	if (condition)
+	{
+		perror(errmsg);
+		exit(EXIT_FAILURE);
+	}
+}
+
 int main()
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
