@@ -24,7 +24,7 @@ int main()
 	{
 		char buffer[1024];
 		std::cin >> buffer;
-		size_t writeLen = write(sockfd, buffer, sizeof(buffer));
+		ssize_t writeLen = write(sockfd, buffer, sizeof(buffer));
 
 		if (writeLen == -1)
 		{
@@ -34,7 +34,7 @@ int main()
 
 		bzero(buffer, sizeof(buffer));
 
-		size_t readLen = read(sockfd, buffer, sizeof(buffer));
+		ssize_t readLen = read(sockfd, buffer, sizeof(buffer));
 
 		if (readLen > 0)
 		{

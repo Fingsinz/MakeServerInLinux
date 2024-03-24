@@ -37,7 +37,7 @@ int main()
 		char buffer[1024];
 		bzero(buffer, sizeof(buffer));
 
-		size_t readLen = read(clientfd, buffer, sizeof(buffer));
+		ssize_t readLen = read(clientfd, buffer, sizeof(buffer));
 
 		if (readLen > 0)
 		{
