@@ -9,6 +9,11 @@
 constexpr int maxEvents = 1024;
 constexpr int bufferSize = 1024;
 
+/*
+ * 处理客户端连接
+ *
+ * @param clientfd 客户端连接的文件描述符
+ */
 void handleClient(int clientfd)
 {
 	char buffer[bufferSize];
@@ -47,36 +52,45 @@ void handleClient(int clientfd)
 
 int main()
 {
+	// 创建服务器 socket
 	Socket *serverSock = new Socket();
 	InetAddress *serverAddr = new InetAddress("127.0.0.1", 1234);
 	serverSock->bind(serverAddr);
 	serverSock->listen();
 	serverSock->setNonBlocking();
-
+	// 创建 epoll
 	Epoll *epoll = new Epoll();
 	epoll->addFd(serverSock->getFd(), EPOLLIN);
 
+	// 记录地址，方便 delete
 	vector<std::pair<InetAddress *, Socket *>> clients;
 
 	while (true)
 	{
+		// 监听事件
 		vector<epoll_event> events = epoll->poll();
-
+		// 遍历事件
 		for (epoll_event const &e : events)
 		{
+			// 如果是客户端的 socket 事件，表明有新客户端连接
 			if (e.data.fd == serverSock->getFd())
 			{
+				// new 出来的记得 delete
 				InetAddress *clientAddr = new InetAddress();
 				Socket *clientSock = new Socket(serverSock->accept(clientAddr));
 				clients.push_back({ clientAddr, clientSock });
 
 				std::cout << "New client " << clientSock->getFd() << ": " <<
 					inet_ntoa(clientAddr->addr.sin_addr) << " : " << ntohs(clientAddr->addr.sin_port) << "\n";
+
+				// 把客户端 socket 加入 epoll 监听
 				clientSock->setNonBlocking();
 				epoll->addFd(clientSock->getFd(), EPOLLIN | EPOLLET);
 			}
+			// 如果是客户端的可读事件，表明有数据可以读取
 			else if (e.events & EPOLLIN)
 			{
+				// 处理客户端事件
 				handleClient(e.data.fd);
 			}
 			else
