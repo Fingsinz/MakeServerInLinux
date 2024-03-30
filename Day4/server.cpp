@@ -9,6 +9,11 @@
 constexpr int maxEvents = 1024;
 constexpr int bufferSize = 1024;
 
+/**
+ * @brief 处理客户端连接
+ *
+ * @param clientfd 客户端连接的文件描述符
+ */
 void handleClient(int clientfd)
 {
 	char buffer[bufferSize];
@@ -47,23 +52,26 @@ void handleClient(int clientfd)
 
 int main()
 {
+	// 创建服务器 Socket
 	Socket *serverSock = new Socket();
 	InetAddress *serverAddr = new InetAddress("127.0.0.1", 1234);
 	serverSock->bind(serverAddr);
 	serverSock->listen();
 	serverSock->setNonBlocking();
-
+	// 创建 Epoll 对象
 	Epoll *epoll = new Epoll();
 	epoll->addFd(serverSock->getFd(), EPOLLIN);
-
+	// 管理客户端内存
 	vector<std::pair<InetAddress *, Socket *>> clients;
 
 	while (true)
 	{
+		// 轮询事件
 		vector<epoll_event> events = epoll->poll();
 
 		for (epoll_event const &e : events)
 		{
+			// 事件的 fd 为服务器 fd，表示有新客户端连接
 			if (e.data.fd == serverSock->getFd())
 			{
 				InetAddress *clientAddr = new InetAddress();
@@ -75,11 +83,12 @@ int main()
 				clientSock->setNonBlocking();
 				epoll->addFd(clientSock->getFd(), EPOLLIN | EPOLLET);
 			}
+			// 事件的 fd 为可读，表示有客户端发送了数据
 			else if (e.events & EPOLLIN)
 			{
 				handleClient(e.data.fd);
 			}
-			else
+			else // 其他
 				std::cout << "Something else happened\n";
 		}
 	}
