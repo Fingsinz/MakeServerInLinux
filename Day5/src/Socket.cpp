@@ -1,6 +1,9 @@
+#include "InetAddress.h"
 #include "Socket.h"
 #include "util.h"
-#include "fcntl.h"
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 Socket::Socket() : fd(-1)
 {

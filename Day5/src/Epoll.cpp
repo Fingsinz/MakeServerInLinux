@@ -1,3 +1,4 @@
+#include "Channel.h"
 #include "Epoll.h"
 #include "util.h"
 #include <unistd.h>
@@ -56,7 +57,7 @@ void Epoll::updateChannel(Channel *channel)
 	ev.events = channel->getEvents();
 	if (!channel->getInEpoll())
 	{
-		errorif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll update error");
+		errorif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add error");
 		channel->setInEpoll();
 	}
 	else

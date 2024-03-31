@@ -2,10 +2,10 @@
 
 #include <sys/epoll.h>
 #include <vector>
-#include "Channel.h"
 
 using std::vector;
 
+class Channel;
 class Epoll
 {
 private:

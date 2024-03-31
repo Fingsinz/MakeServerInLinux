@@ -2,8 +2,8 @@
 
 #include <sys/epoll.h>
 #include <functional>
-#include "EventLoop.h"
 
+class EventLoop;
 class Channel
 {
 private:
