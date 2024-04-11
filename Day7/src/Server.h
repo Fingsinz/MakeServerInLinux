@@ -16,6 +16,7 @@ private:
 	// 指向Acceptor对象的指针
 	Acceptor *acceptor;
 
+	// 存储连接及其相应的文件描述符
 	std::map<int, Connection *> connections;
 
 public:
