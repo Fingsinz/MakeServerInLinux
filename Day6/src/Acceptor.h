@@ -23,10 +23,10 @@ private:
 	Channel *acceptChannel;
 
 public:
-
 	// 定义一个新建连接的回调函数
 	std::function<void(Socket *)> newConnectionCallback;
 
+public:
 	Acceptor(EventLoop *_loop);
 	~Acceptor();
 

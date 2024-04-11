@@ -1,3 +1,4 @@
+#include "Acceptor.h"
 #include "Channel.h"
 #include "InetAddress.h"
 #include "Server.h"
@@ -9,28 +10,21 @@
 
 constexpr int READ_BUFFER = 1024;
 
-Server::Server(EventLoop *_loop) : loop(_loop)
+Server::Server(EventLoop *_loop) : loop(_loop), acceptor(nullptr)
 {
-	serverSock = new Socket();
-	serverAddr = new InetAddress("127.0.0.1", 1234);
-	serverSock->bind(serverAddr);
-	serverSock->listen();
-	serverSock->setNonBlocking();
+	// 使用给定的事件循环创建一个新的Acceptor对象
+	acceptor = new Acceptor(loop);
 
-	serverChannel = new Channel(loop, serverSock->getFd());
-	std::function<void()> cb = std::bind(&Server::newConnection, this, serverSock);
-	serverChannel->setCallback(cb);
-	serverChannel->enableReading();
+	// 定义一个回调函数cb，它接受一个Socket指针作为参数
+	std::function<void(Socket *)> cb = std::bind(&Server::newConnection, this, std::placeholders::_1);
+
+	// 将acceptor的新连接回调设置为已定义的回调函数
+	acceptor->setNewConnectionCallback(cb);
 }
 
 Server::~Server()
 {
-	delete serverSock;
-	delete serverAddr;
-	delete serverChannel;
-
-	for (std::pair<Socket *, InetAddress * > client : clients)
-		delete client.first, delete client.second;
+	delete acceptor;
 }
 
 void Server::handleReadEvent(int fd)
@@ -79,7 +73,7 @@ void Server::newConnection(Socket *sock)
 	InetAddress *clientAddr = new InetAddress();
 
 	//通过使用客户端地址接受来自服务器套接字的连接，创建一个新的Socket对象
-	Socket *clientSock = new Socket(serverSock->accept(clientAddr));
+	Socket *clientSock = new Socket(sock->accept(clientAddr));
 
 	// 打印有关新客户端连接的信息
 	std::cout << "New client " << clientSock->getFd() << ": " <<
