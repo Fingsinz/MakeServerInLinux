@@ -38,6 +38,9 @@
     <ClCompile Include="client.cpp" />
     <ClCompile Include="server.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Makefile" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{f01e3dc5-c2b6-4e6c-994f-133b4a20ffd8}</ProjectGuid>
     <Keyword>Linux</Keyword>
