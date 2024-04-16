@@ -20,4 +20,7 @@
     <ClInclude Include="src\Socket.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Makefile" />
+  </ItemGroup>
 </Project>
