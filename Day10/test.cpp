@@ -26,29 +26,29 @@ void oneClient(int msgs, int wait)
 	while (count < msgs)
 	{
 		sendBuffer->setBuf("I'm client!");
-		ssize_t write_bytes = write(sockfd, sendBuffer->c_str(), sendBuffer->size());
-		if (write_bytes == -1)
+		ssize_t writeLen = write(sockfd, sendBuffer->c_str(), sendBuffer->size());
+		if (writeLen == -1)
 		{
 			printf("socket already disconnected, can't write any more!\n");
 			break;
 		}
-		int already_read = 0;
+		int alreadyRead = 0;
 		char buf[1024];    //这个buf大小无所谓
 		while (true)
 		{
 			bzero(&buf, sizeof(buf));
-			ssize_t read_bytes = read(sockfd, buf, sizeof(buf));
-			if (read_bytes > 0)
+			ssize_t readLen = read(sockfd, buf, sizeof(buf));
+			if (readLen > 0)
 			{
-				readBuffer->append(buf, read_bytes);
-				already_read += read_bytes;
+				readBuffer->append(buf, readLen);
+				alreadyRead += readLen;
 			}
-			else if (read_bytes == 0)
-			{         //EOF
+			else if (readLen == 0)	// EOF
+			{
 				printf("server disconnected!\n");
 				exit(EXIT_SUCCESS);
 			}
-			if (already_read >= sendBuffer->size())
+			if (alreadyRead >= sendBuffer->size())
 			{
 				printf("count: %d, message from server: %s\n", count++, readBuffer->c_str());
 				break;
@@ -63,7 +63,7 @@ void oneClient(int msgs, int wait)
 int main(int argc, char *argv[])
 {
 	int threads = 100;
-	int msgs = 10;
+	int msgs = 100;
 	int wait = 0;
 	int o;
 	const char *optstring = "t:m:w:";
