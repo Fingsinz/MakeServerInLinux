@@ -29,10 +29,13 @@ void Server::handleReadEvent(int fd)
 
 void Server::newConnection(Socket *_socket)
 {
-	Connection *conn = new Connection(loop, _socket);
-	std::function<void(int)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
-	conn->setDeleteConnectionCallback(cb);
-	connections[_socket->getFd()] = conn;
+	if (_socket->getFd() != -1)
+	{
+		Connection *conn = new Connection(loop, _socket);
+		std::function<void(int)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
+		conn->setDeleteConnectionCallback(cb);
+		connections[_socket->getFd()] = conn;
+	}
 }
 
 void Server::deleteConnection(int sockfd)

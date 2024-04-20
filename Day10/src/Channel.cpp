@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 Channel::Channel(EventLoop *_loop, int _fd) : loop(_loop), fd(_fd),
-events(0), inEpoll(false), useThreadPool(false)
+events(0), ready(0), inEpoll(false), useThreadPool(false)
 {}
 
 Channel::~Channel()
@@ -24,11 +24,19 @@ void Channel::handleEvent()
 		else
 			readCallback();
 	}
+
+	if (ready & EPOLLOUT)
+	{
+		if (useThreadPool)
+			loop->addThread(writeCallback);
+		else
+			writeCallback();
+	}
 }
 
 void Channel::enableReading()
 {
-	events = EPOLLIN | EPOLLPRI;
+	events |= EPOLLIN | EPOLLPRI;
 	loop->updateChannel(this);
 }
 

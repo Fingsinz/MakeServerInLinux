@@ -11,10 +11,12 @@ Connection::Connection(EventLoop *_loop, Socket *_sock) : loop(_loop), sock(_soc
 channel(nullptr), readBuffer(nullptr)
 {
 	channel = new Channel(loop, sock->getFd());
+	channel->useET();
+	channel->enableReading();
+
 	std::function<void()> cb = std::bind(&Connection::echo, this, sock->getFd());
 	channel->setReadCallback(cb);
 	channel->setUseThreadPool(true);
-	channel->enableReading();
 	readBuffer = new Buffer();
 }
 
