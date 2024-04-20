@@ -63,7 +63,7 @@ void oneClient(int msgs, int wait)
 int main(int argc, char *argv[])
 {
 	int threads = 100;
-	int msgs = 100;
+	int msgs = 10;
 	int wait = 0;
 	int o;
 	const char *optstring = "t:m:w:";

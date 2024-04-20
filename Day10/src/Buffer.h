@@ -40,5 +40,10 @@ public:
 	 */
 	void getline();
 
+	/**
+	 * @brief 设置类的缓冲区
+	 *
+	 * @param _buf 要设置的字符串
+	 */
 	void setBuf(char const *_buf);
 };
