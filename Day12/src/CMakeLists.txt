@@ -1,0 +1,1 @@
+file(GLOB_RECURSE Day12_sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
