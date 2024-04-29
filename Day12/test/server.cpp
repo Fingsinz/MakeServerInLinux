@@ -1,5 +1,5 @@
-﻿#include "../src/include/EventLoop.h"
-#include "../src/include/Server.h"
+﻿#include "EventLoop.h"
+#include "Server.h"
 
 int main()
 {

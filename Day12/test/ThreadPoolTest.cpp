@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 #include <string>
-#include "src/ThreadPool.h"
+#include "ThreadPool.h"
 
 void print(int a, double b, char const *c, std::string d)
 {

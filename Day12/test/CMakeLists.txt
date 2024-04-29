@@ -1,15 +1,18 @@
-﻿# 设置变量TEST_SOURCES，将所有.cpp文件存储在测试目录中
+﻿# 设置包含目录
+set(SRC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/include)
+include_directories(${SRC_INCLUDE_DIR})
+
+# 设置变量TEST_SOURCES，将所有.cpp文件存储在测试目录中
 file(GLOB TEST_SOURCES "${PROJECT_SOURCE_DIR}/test/*.cpp")
 
 # 创建名为“build-tests”的自定义目标以仅显示测试
 add_custom_target(build-tests COMMAND ${CMAKE_CTEST_COMMAND} --show-only)
-
 # 创建名为“check-tests”的自定义目标以在详细模式下运行测试
 add_custom_target(check-tests COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
 
 # 遍历TEST_SOURCES中的每个测试源文件
 foreach (test_source ${TEST_SOURCES})
-    # 组合为可读的名称
+    # 组合为可读的名称，使得每个Cpp都可以make
     get_filename_component(test_filename ${test_source} NAME)
     string(REPLACE ".cpp" "" test_name ${test_filename})
 

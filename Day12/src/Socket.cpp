@@ -1,6 +1,6 @@
-﻿#include "include/InetAddress.h"
-#include "include/Socket.h"
-#include "include/util.h"
+﻿#include "InetAddress.h"
+#include "Socket.h"
+#include "util.h"
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>

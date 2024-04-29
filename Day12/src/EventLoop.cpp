@@ -1,7 +1,6 @@
-﻿#include "include/Channel.h"
-#include "include/Epoll.h"
-#include "include/EventLoop.h"
-#include "include/ThreadPool.h"
+﻿#include "Channel.h"
+#include "Epoll.h"
+#include "EventLoop.h"
 #include <vector>
 
 EventLoop::EventLoop() : ep(nullptr), quit(false)
