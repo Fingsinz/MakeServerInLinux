@@ -9,8 +9,8 @@ class Channel;
 class Epoll
 {
 private:
-	int epfd;					// epoll文件描述符
-	struct epoll_event *events;	// epoll事件数组
+	int epfd{ -1 };					// epoll文件描述符
+	struct epoll_event *events{ nullptr };	// epoll事件数组
 
 public:
 	Epoll();
@@ -23,6 +23,11 @@ public:
 	 */
 	void updateChannel(Channel *channel);
 
+	/**
+	 * @brief 删除Channel
+	 *
+	 * @param channel 要删除的Channel指针
+	 */
 	void deleteChannel(Channel *channel);
 
 	/**

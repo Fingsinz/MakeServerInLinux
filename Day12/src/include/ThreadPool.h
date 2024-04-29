@@ -18,7 +18,7 @@ private:
 	bool stop;									// 指示线程停止的标志
 
 public:
-	ThreadPool(int size = 10);
+	explicit ThreadPool(int size = std::thread::hardware_concurrency());
 	~ThreadPool();
 
 	/**

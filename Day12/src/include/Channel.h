@@ -19,7 +19,7 @@ private:
 	std::function<void()> writeCallback;
 
 public:
-	Channel(EventLoop *_loop, int _fd);
+	explicit Channel(EventLoop *_loop, int _fd);
 	~Channel();
 
 	/**
@@ -84,5 +84,5 @@ public:
 	 *
 	 * @param _callback要设置的回调函数。
 	 */
-	void setReadCallback(std::function<void()> _callback);
+	void setReadCallback(std::function<void()> const &_callback);
 };

@@ -12,7 +12,7 @@ private:
 public:
 	InetAddress();
 	explicit InetAddress(std::string const &ip, uint16_t port);
-	~InetAddress();
+	~InetAddress() = default;
 
 	/**
 	 * @brief 设置地址信息

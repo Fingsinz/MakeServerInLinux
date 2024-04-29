@@ -19,7 +19,7 @@ private:
 	ThreadPool *threadPool;						// 线程池
 
 public:
-	Server(EventLoop *_loop);
+	explicit Server(EventLoop *_loop);
 	~Server();
 
 	/**

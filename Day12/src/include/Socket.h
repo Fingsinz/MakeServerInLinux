@@ -5,7 +5,7 @@ class InetAddress;
 class Socket
 {
 private:
-	int fd;	// socket 文件描述符
+	int fd{ -1 };	// socket 文件描述符
 
 public:
 	Socket();

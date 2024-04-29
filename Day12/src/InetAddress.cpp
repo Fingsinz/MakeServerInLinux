@@ -1,4 +1,4 @@
-﻿#include "InetAddress.h"
+﻿#include "include/InetAddress.h"
 #include <cstring>
 
 InetAddress::InetAddress() : addrLen(sizeof(addr))
@@ -14,9 +14,6 @@ InetAddress::InetAddress(std::string const &ip, uint16_t port) : addrLen(sizeof(
 	addr.sin_port = htons(port);
 	addrLen = sizeof(addr);
 }
-
-InetAddress::~InetAddress()
-{}
 
 void InetAddress::setInetAddr(sockaddr_in _addr, socklen_t _addrLen)
 {

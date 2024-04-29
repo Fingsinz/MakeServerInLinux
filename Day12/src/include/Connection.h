@@ -19,7 +19,7 @@ private:
 	std::function<void(int)> deleteConnectionCallback;
 
 public:
-	Connection(EventLoop *_loop, Socket *_sock);
+	explicit Connection(EventLoop *_loop, Socket *_sock);
 	~Connection();
 
 	/**
@@ -34,7 +34,7 @@ public:
 	 *
 	 * @param _callback 删除连接时要调用的回调函数
 	 */
-	void setDeleteConnectionCallback(std::function<void(int)> _callback);
+	void setDeleteConnectionCallback(std::function<void(int)> const &_callback);
 
 	/**
 	 * @brief 通过指定的套接字发送数据。

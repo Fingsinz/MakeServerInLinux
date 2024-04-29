@@ -1,8 +1,8 @@
-﻿#include "Buffer.h"
-#include "Connection.h"
-#include "Socket.h"
-#include "Channel.h"
-#include "util.h"
+﻿#include "include/Buffer.h"
+#include "include/Connection.h"
+#include "include/Socket.h"
+#include "include/Channel.h"
+#include "include/util.h"
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
@@ -72,7 +72,7 @@ void Connection::echo(int sockfd)
 	}
 }
 
-void Connection::setDeleteConnectionCallback(std::function<void(int)> _cb)
+void Connection::setDeleteConnectionCallback(std::function<void(int)> const &_cb)
 {
 	deleteConnectionCallback = _cb;
 }

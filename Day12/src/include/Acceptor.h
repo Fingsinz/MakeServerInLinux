@@ -18,7 +18,7 @@ private:
 	std::function<void(Socket *)> newConnectionCallback;
 
 public:
-	Acceptor(EventLoop *_loop);
+	explicit Acceptor(EventLoop *_loop);
 	~Acceptor();
 
 	/**
@@ -31,5 +31,5 @@ public:
 	 *
 	 * @param _callback 为新连接设置的回调函数。
 	 */
-	void setNewConnectionCallback(std::function<void(Socket *)> _callback);
+	void setNewConnectionCallback(std::function<void(Socket *)> const &_callback);
 };

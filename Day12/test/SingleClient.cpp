@@ -1,7 +1,7 @@
-﻿#include "src/Buffer.h"
-#include "src/InetAddress.h"
-#include "src/Socket.h"
-#include "src/util.h"
+﻿#include "../src/include/Buffer.h"
+#include "../src/include/InetAddress.h"
+#include "../src/include/Socket.h"
+#include "../src/include/util.h"
 #include <iostream>
 #include <cstring>
 #include <unistd.h>

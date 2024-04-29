@@ -1,5 +1,5 @@
-﻿#include "Channel.h"
-#include "EventLoop.h"
+﻿#include "include/Channel.h"
+#include "include/EventLoop.h"
 #include <unistd.h>
 
 Channel::Channel(EventLoop *_loop, int _fd) : loop(_loop), fd(_fd),
@@ -66,7 +66,7 @@ void Channel::setReady(uint32_t _ready)
 	ready = _ready;
 }
 
-void Channel::setReadCallback(std::function<void()> _callback)
+void Channel::setReadCallback(std::function<void()> const &_callback)
 {
 	readCallback = _callback;
 }

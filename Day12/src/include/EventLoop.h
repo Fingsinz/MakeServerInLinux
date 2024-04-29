@@ -8,8 +8,8 @@ class Channel;
 class EventLoop
 {
 private:
-	Epoll *ep;	// 指向Epoll类实例的指针
-	bool quit;	// 指示程序是否应该退出
+	Epoll *ep{ nullptr };	// 指向Epoll类实例的指针
+	bool quit{ false };		// 指示程序是否应该退出
 
 public:
 	EventLoop();

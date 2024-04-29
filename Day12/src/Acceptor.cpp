@@ -1,8 +1,8 @@
-﻿#include "Acceptor.h"
-#include "Socket.h"
-#include "InetAddress.h"
-#include "Channel.h"
-#include "Server.h"
+﻿#include "include/Acceptor.h"
+#include "include/Socket.h"
+#include "include/InetAddress.h"
+#include "include/Channel.h"
+#include "include/Server.h"
 #include <iostream>
 
 Acceptor::Acceptor(EventLoop *_loop) : loop(_loop), sock(nullptr), acceptChannel(nullptr)
@@ -52,7 +52,7 @@ void Acceptor::acceptConnection()
 	delete clientAddr;
 }
 
-void Acceptor::setNewConnectionCallback(std::function<void(Socket *)> _callback)
+void Acceptor::setNewConnectionCallback(std::function<void(Socket *)> const &_callback)
 {
 	// 设置新的连接回调函数
 	newConnectionCallback = _callback;
