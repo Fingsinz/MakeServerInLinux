@@ -4,9 +4,13 @@ set(BUILD_SHARED_LIBS ON)               # 构建共享（动态）库
 set(CMAKE_CXX_STANDARD 17)              # 设置C++标准为17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)     # 要求编译器支持C++17
 
+# 设置编译器
+set(CMAKE_C_COMPILER "clang")
+set(CMAKE_CXX_COMPILER "clang++")
+
 # 项目信息
 project(Day12           # 项目名称
-        LANGUAGES CXX # 项目语言
+        LANGUAGES CXX   # 项目语言
        )
 
 # 为源代码和测试添加子目录

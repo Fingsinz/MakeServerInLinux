@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Macros.h"
 #include <vector>
 #include <queue>
 #include <functional>
@@ -20,6 +21,9 @@ private:
 public:
 	explicit ThreadPool(int size = std::thread::hardware_concurrency());
 	~ThreadPool();
+
+	// 禁止拷贝和移动
+	DISALLOW_COPY_AND_MOVE(ThreadPool);
 
 	/**
 	 * @brief 将任务添加到线程池并返回结果的future。

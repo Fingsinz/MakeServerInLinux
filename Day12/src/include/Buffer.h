@@ -1,22 +1,26 @@
 ﻿#pragma once
 
+#include "Macros.h"
 #include <string>
 
 class Buffer
 {
 private:
-	std::string buf;
+	std::string mBuf;
 
 public:
 	Buffer() = default;
 	~Buffer() = default;
 
+	// 禁用拷贝和移动
+	DISALLOW_COPY_AND_MOVE(Buffer);
+
 	/**
 	 * @brief 向当前字符串追加一个字符串
 	 * @param str 要追加的字符串
-	 * @param _size 字符串大小
+	 * @param size 字符串大小
 	 */
-	void append(char const *str, int _size);
+	void append(char const *str, int size);
 
 	/**
 	 * @brief 返回当前缓冲区字符串大小
@@ -25,7 +29,7 @@ public:
 	ssize_t size();
 
 	/**
-	 * @brief返回指向底层字符串数据的指针
+	 * @brief 返回指向底层字符串数据的指针
 	 * @return 指向底层字符串数据的指针
 	 */
 	char const *c_str();
@@ -43,7 +47,7 @@ public:
 	/**
 	 * @brief 设置类的缓冲区
 	 *
-	 * @param _buf 要设置的字符串
+	 * @param buf 要设置的字符串
 	 */
-	void setBuf(char const *_buf);
+	void setBuf(char const *buf);
 };

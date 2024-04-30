@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Macros.h"
 #include <functional>
 
 class Epoll;
@@ -14,6 +15,9 @@ private:
 public:
 	EventLoop();
 	~EventLoop();
+
+	// 禁用拷贝和移动
+	DISALLOW_COPY_AND_MOVE(EventLoop);
 
 	/**
 	 * @brief 循环函数

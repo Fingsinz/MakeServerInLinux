@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Macros.h"
 #include <functional>
 
 class Buffer;
@@ -10,17 +11,20 @@ class Channel;
 class Connection
 {
 private:
-	EventLoop *loop;	// EventLoop指针
-	Socket *sock;		// Socket指针
-	Channel *channel;	// Channel指针
-	Buffer *readBuffer;	// 读缓冲区
+	EventLoop *mLoop;		// EventLoop指针
+	Socket *mSocket;		// Socket指针
+	Channel *mChannel;		// Channel指针
+	Buffer *mReadBuffer;	// 读缓冲区
 
 	// 删除连接的回调函数
-	std::function<void(int)> deleteConnectionCallback;
+	std::function<void(int)> mDeleteConnectionCallback;
 
 public:
-	explicit Connection(EventLoop *_loop, Socket *_sock);
+	explicit Connection(EventLoop *loop, Socket *sock);
 	~Connection();
+
+	// 禁止拷贝和移动
+	DISALLOW_COPY_AND_MOVE(Connection);
 
 	/**
 	 * @brief 回显sockfd发来的数据
@@ -34,7 +38,7 @@ public:
 	 *
 	 * @param _callback 删除连接时要调用的回调函数
 	 */
-	void setDeleteConnectionCallback(std::function<void(int)> const &_callback);
+	void setDeleteConnectionCallback(std::function<void(int)> const &callback);
 
 	/**
 	 * @brief 通过指定的套接字发送数据。

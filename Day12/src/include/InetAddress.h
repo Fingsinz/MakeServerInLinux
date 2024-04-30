@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Macros.h"
 #include <arpa/inet.h>
 #include <string>
 
@@ -13,6 +14,9 @@ public:
 	InetAddress();
 	explicit InetAddress(std::string const &ip, uint16_t port);
 	~InetAddress() = default;
+
+	// 禁止拷贝和移动
+	DISALLOW_COPY_AND_MOVE(InetAddress);
 
 	/**
 	 * @brief 设置地址信息

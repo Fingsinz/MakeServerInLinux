@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Macros.h"
+
 class InetAddress;
 
 class Socket
@@ -11,6 +13,9 @@ public:
 	Socket();
 	explicit Socket(int);
 	~Socket();
+
+	// 禁止拷贝和移动
+	DISALLOW_COPY_AND_MOVE(Socket);
 
 	/*
 	* @brief 绑定要监听的地址

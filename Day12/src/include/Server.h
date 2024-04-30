@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Macros.h"
 #include <map>
 #include <vector>
 
@@ -19,8 +20,11 @@ private:
 	ThreadPool *threadPool;						// 线程池
 
 public:
-	explicit Server(EventLoop *_loop);
+	explicit Server(EventLoop *loop);
 	~Server();
+
+	// 禁止拷贝和移动
+	DISALLOW_COPY_AND_MOVE(Server);
 
 	/**
 	 * @brief 处理给定文件描述符的读取事件
@@ -34,7 +38,7 @@ public:
 	 *
 	 * @param _socket 表示新连接的套接字
 	 */
-	void newConnection(Socket *_socket);
+	void newConnection(Socket *socket);
 
 	/**
 	 * @brief 断开与提供的套接字关联的连接

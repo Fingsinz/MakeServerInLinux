@@ -1,6 +1,11 @@
 ﻿#pragma once
 
+#include "Macros.h"
+
+#ifdef  OS_LINUX
 #include <sys/epoll.h>
+#endif //  OS_LINUX
+
 #include <vector>
 
 using std::vector;
@@ -9,12 +14,15 @@ class Channel;
 class Epoll
 {
 private:
-	int epfd{ -1 };					// epoll文件描述符
-	struct epoll_event *events{ nullptr };	// epoll事件数组
+	int mEpFd{ -1 };					// epoll文件描述符
+	struct epoll_event *mEvents{ nullptr };	// epoll事件数组
 
 public:
 	Epoll();
 	~Epoll();
+
+	// 禁用拷贝和移动
+	DISALLOW_COPY_AND_MOVE(Epoll);
 
 	/**
 	 * @brief 更新 Channel 信息

@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Macros.h"
 #include <sys/epoll.h>
 #include <functional>
 
@@ -8,10 +9,10 @@ class EventLoop;
 class Channel
 {
 private:
-	EventLoop *loop;	// 指向与之关联的事件循环的指针
-	int fd;				// 与之关联的文件描述符
-	uint32_t events;	// 希望监听的事件
-	uint32_t ready;		// 用于存储就绪事件
+	EventLoop *mLoop;	// 指向与之关联的事件循环的指针
+	int mFd;				// 与之关联的文件描述符
+	uint32_t mEvents;	// 希望监听的事件
+	uint32_t mReady;		// 用于存储就绪事件
 	bool inEpoll;		// 指示文件描述符是否在epoll集合中
 
 	// 发生事件时执行的回调函数
@@ -19,8 +20,11 @@ private:
 	std::function<void()> writeCallback;
 
 public:
-	explicit Channel(EventLoop *_loop, int _fd);
+	explicit Channel(EventLoop *loop, int fd);
 	~Channel();
+
+	// 禁止拷贝和移动
+	DISALLOW_COPY_AND_MOVE(Channel);
 
 	/**
 	 * @brief 处理事件
@@ -63,9 +67,9 @@ public:
 	/**
 	 * @brief 设置对象是否处于Epoll中。
 	 *
-	 * @param _in 布尔值
+	 * @param in 布尔值
 	 */
-	void setInEpoll(bool _in = true);
+	void setInEpoll(bool in = true);
 
 	/**
 	 * @brief 使用 ET 模式
@@ -75,14 +79,14 @@ public:
 	/**
 	 * @brief 设置Ready值
 	 *
-	 * @param ready值。
+	 * @param ready ready值。
 	 */
-	void setReady(uint32_t _ready);
+	void setReady(uint32_t ready);
 
 	/**
 	 * @brief 设置回调函数。
 	 *
 	 * @param _callback要设置的回调函数。
 	 */
-	void setReadCallback(std::function<void()> const &_callback);
+	void setReadCallback(std::function<void()> const &callback);
 };

@@ -9,7 +9,7 @@
 
 constexpr int READ_BUFFER = 1024;
 
-Server::Server(EventLoop *_loop) : mainReactor(_loop), acceptor(nullptr)
+Server::Server(EventLoop *loop) : mainReactor(loop), acceptor(nullptr)
 {
 	// 使用给定的事件循环创建一个新的Acceptor对象
 	acceptor = new Acceptor(mainReactor);
@@ -41,15 +41,15 @@ Server::~Server()
 void Server::handleReadEvent(int fd)
 {}
 
-void Server::newConnection(Socket *_socket)
+void Server::newConnection(Socket *socket)
 {
-	if (_socket->getFd() != -1)
+	if (socket->getFd() != -1)
 	{
-		int random = _socket->getFd() % subReactors.size();
-		Connection *conn = new Connection(subReactors[random], _socket);
+		int random = socket->getFd() % subReactors.size();
+		Connection *conn = new Connection(subReactors[random], socket);
 		std::function<void(int)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
 		conn->setDeleteConnectionCallback(cb);
-		connections[_socket->getFd()] = conn;
+		connections[socket->getFd()] = conn;
 	}
 }
 
@@ -62,8 +62,8 @@ void Server::deleteConnection(int sockfd)
 		{
 			Connection *conn = connections[sockfd];
 			connections.erase(sockfd);
-			close(sockfd);
-			// delete conn;			// 会段错误
+			// close(sockfd);
+			delete conn;
 		}
 	}
 }

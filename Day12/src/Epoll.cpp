@@ -6,33 +6,33 @@
 
 constexpr int maxEvents = 1024;
 
-Epoll::Epoll() : epfd(-1), events(nullptr)
+Epoll::Epoll() : mEpFd(-1), mEvents(nullptr)
 {
-	epfd = epoll_create1(0);
-	errorif(epfd == -1, "epoll create error");
-	events = new epoll_event[maxEvents];
-	bzero(events, sizeof(epoll_event) * maxEvents);
+	mEpFd = epoll_create1(0);
+	errorif(mEpFd == -1, "epoll create error");
+	mEvents = new epoll_event[maxEvents];
+	bzero(mEvents, sizeof(epoll_event) * maxEvents);
 }
 
 Epoll::~Epoll()
 {
-	if (epfd != -1)
+	if (mEpFd != -1)
 	{
-		close(epfd);
-		epfd = -1;
+		close(mEpFd);
+		mEpFd = -1;
 	}
-	delete[] events;
+	delete[] mEvents;
 }
 
 vector<Channel *> Epoll::poll(int timeout)
 {
 	vector<Channel *> activeEvents;
-	int nfds = epoll_wait(epfd, events, maxEvents, timeout);
+	int nfds = epoll_wait(mEpFd, mEvents, maxEvents, timeout);
 	errorif(nfds == -1, "epoll wait error");
 	for (int i = 0; i < nfds; ++i)
 	{
-		Channel *channel = (Channel *)events[i].data.ptr;
-		channel->setReady(events[i].events);
+		Channel *channel = (Channel *)mEvents[i].data.ptr;
+		channel->setReady(mEvents[i].events);
 		activeEvents.push_back(channel);
 	}
 
@@ -48,18 +48,18 @@ void Epoll::updateChannel(Channel *channel)
 	ev.events = channel->getEvents();
 	if (!channel->getInEpoll())
 	{
-		errorif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add error");
+		errorif(epoll_ctl(mEpFd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add error");
 		channel->setInEpoll();
 	}
 	else
 	{
-		errorif(epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev) == -1, "epoll update error");
+		errorif(epoll_ctl(mEpFd, EPOLL_CTL_MOD, fd, &ev) == -1, "epoll update error");
 	}
 }
 
 void Epoll::deleteChannel(Channel *channel)
 {
 	int fd = channel->getFd();
-	errorif(epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr) == -1, "epoll delete error");
+	errorif(epoll_ctl(mEpFd, EPOLL_CTL_DEL, fd, nullptr) == -1, "epoll delete error");
 	channel->setInEpoll(false);
 }

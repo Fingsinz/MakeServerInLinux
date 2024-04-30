@@ -2,39 +2,39 @@
 #include <cstring>
 #include <iostream>
 
-void Buffer::append(char const *_str, int _size)
+void Buffer::append(char const *str, int size)
 {
-	for (int i = 0; i < _size; ++ i)
+	for (int i = 0; i < size; ++ i)
 	{
-		if (_str[i] == '\0')
+		if (str[i] == '\0')
 			break;
-		buf.push_back(_str[i]);
+		mBuf.push_back(str[i]);
 	}
 }
 
 ssize_t Buffer::size()
 {
-	return buf.size();
+	return mBuf.size();
 }
 
 char const *Buffer::c_str()
 {
-	return buf.c_str();
+	return mBuf.c_str();
 }
 
 void Buffer::clear()
 {
-	buf.clear();
+	mBuf.clear();
 }
 
 void Buffer::getline()
 {
-	buf.clear();
-	std::getline(std::cin, buf);
+	mBuf.clear();
+	std::getline(std::cin, mBuf);
 }
 
-void Buffer::setBuf(char const *_buf)
+void Buffer::setBuf(char const *buf)
 {
-	buf.clear();
-	buf.append(_buf);
+	mBuf.clear();
+	mBuf.append(buf);
 }

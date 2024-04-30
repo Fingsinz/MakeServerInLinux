@@ -6,23 +6,23 @@
 #include <cstring>
 #include <iostream>
 
-Connection::Connection(EventLoop *_loop, Socket *_sock) : loop(_loop), sock(_sock),
-channel(nullptr), readBuffer(nullptr)
+Connection::Connection(EventLoop *loop, Socket *sock) : mLoop(loop), mSocket(sock),
+mChannel(nullptr), mReadBuffer(nullptr)
 {
-	channel = new Channel(loop, sock->getFd());
-	channel->useET();
-	channel->enableReading();
+	mChannel = new Channel(mLoop, mSocket->getFd());
+	mChannel->useET();
+	mChannel->enableReading();
 
-	std::function<void()> cb = std::bind(&Connection::echo, this, sock->getFd());
-	channel->setReadCallback(cb);
-	readBuffer = new Buffer();
+	std::function<void()> cb = std::bind(&Connection::echo, this, mSocket->getFd());
+	mChannel->setReadCallback(cb);
+	mReadBuffer = new Buffer();
 }
 
 Connection::~Connection()
 {
-	delete channel;
-	delete sock;
-	delete readBuffer;
+	delete mChannel;
+	delete mSocket;
+	delete mReadBuffer;
 }
 
 void Connection::echo(int sockfd)
@@ -35,7 +35,7 @@ void Connection::echo(int sockfd)
 		ssize_t readLen = read(sockfd, buf, sizeof(buf));
 
 		if (readLen > 0)
-			readBuffer->append(buf, readLen);
+			mReadBuffer->append(buf, readLen);
 
 		// 客户端正常中断、继续读取
 		else if (readLen == -1 and errno == EINTR)
@@ -48,9 +48,9 @@ void Connection::echo(int sockfd)
 		else if (readLen == -1 and ((errno == EAGAIN) or (errno == EWOULDBLOCK)))
 		{
 			// 非阻塞下，错误码为EAGAIN或EWOULDBLOCK
-			std::cout << "[From client " << sockfd << " ]:\t" << readBuffer->c_str() << "\n";
+			std::cout << "[From client " << sockfd << " ]:\t" << mReadBuffer->c_str() << "\n";
 			send(sockfd);
-			readBuffer->clear();
+			mReadBuffer->clear();
 			break;
 		}
 
@@ -58,14 +58,14 @@ void Connection::echo(int sockfd)
 		else if (readLen == 0)
 		{
 			std::cout << "[Client " << sockfd << " ]:\tdisconnected\n";
-			deleteConnectionCallback(sockfd);
+			mDeleteConnectionCallback(sockfd);
 			break;
 		}
 
 		else
 		{
 			std::cout << "[Error]:\tConnection reset by peer\n";
-			deleteConnectionCallback(sockfd);
+			mDeleteConnectionCallback(sockfd);
 			break;
 		}
 	}
@@ -73,17 +73,17 @@ void Connection::echo(int sockfd)
 
 void Connection::setDeleteConnectionCallback(std::function<void(int)> const &_cb)
 {
-	deleteConnectionCallback = _cb;
+	mDeleteConnectionCallback = _cb;
 }
 
 void Connection::send(int sockfd)
 {
 	// 创建一个缓冲区来保存要发送的数据，其大小等于readBuffer的大小
-	char buf[readBuffer->size()];
-	strcpy(buf, readBuffer->c_str());
+	char buf[mReadBuffer->size()];
+	strcpy(buf, mReadBuffer->c_str());
 
 	// 存储要发送的数据的总大小
-	int dataSize = readBuffer->size();
+	int dataSize = mReadBuffer->size();
 
 	// 将要发送的剩余数据初始化为总数据大小
 	int dataLeft = dataSize;

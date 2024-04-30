@@ -17,7 +17,8 @@
       "remoteCopySources": true,
       "rsyncCommandArgs": "-t --delete",
       "remoteCopyBuildOutput": false,
-      "remoteCopySourcesMethod": "rsync"
+      "remoteCopySourcesMethod": "rsync",
+      "intelliSenseMode": "linux-gcc-x64"
     }
   ]
 }
