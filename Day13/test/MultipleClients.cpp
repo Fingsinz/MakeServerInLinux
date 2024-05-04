@@ -1,9 +1,7 @@
 ﻿#include <iostream>
 #include <unistd.h>
-#include <string.h>
-#include <functional>
-#include "util.h"
-#include "Buffer.h"
+#include <cstring>
+#include "Connection.h"
 #include "InetAddress.h"
 #include "Socket.h"
 #include "ThreadPool.h"
@@ -15,49 +13,28 @@ void oneClient(int msgs, int wait)
 	Socket *sock = new Socket();
 	InetAddress *addr = new InetAddress("127.0.0.1", 1234);
 	sock->connect(addr);
-
-	int sockfd = sock->getFd();
-
-	Buffer *sendBuffer = new Buffer();
-	Buffer *readBuffer = new Buffer();
+	Connection *conn = new Connection(nullptr, sock);
 
 	sleep(wait);
+
 	int count = 0;
+
 	while (count < msgs)
 	{
-		sendBuffer->setBuf("I'm client!");
-		ssize_t writeLen = write(sockfd, sendBuffer->c_str(), sendBuffer->size());
-		if (writeLen == -1)
+		conn->setSentBuffer("Client：hello");
+		conn->write();
+		if (conn->getState() == Connection::State::Closed)
 		{
-			printf("socket already disconnected, can't write any more!\n");
+			conn->close();
 			break;
 		}
-		int alreadyRead = 0;
-		char buf[1024];    //这个buf大小无所谓
-		while (true)
-		{
-			bzero(&buf, sizeof(buf));
-			ssize_t readLen = read(sockfd, buf, sizeof(buf));
-			if (readLen > 0)
-			{
-				readBuffer->append(buf, readLen);
-				alreadyRead += readLen;
-			}
-			else if (readLen == 0)	// EOF
-			{
-				printf("server disconnected!\n");
-				exit(EXIT_SUCCESS);
-			}
-			if (alreadyRead >= sendBuffer->size())
-			{
-				printf("count: %d, message from server: %s\n", count++, readBuffer->c_str());
-				break;
-			}
-		}
-		readBuffer->clear();
+		conn->read();
+		std::cout << "[Msg From " << sock->getFd() << " Count " << count ++ << " ]\t" << conn->readBuffer() << std::endl;
 	}
+
+	delete conn;
 	delete addr;
-	delete sock;
+	// delete sock; Connection 类会释放 Socket
 }
 
 int main(int argc, char *argv[])
@@ -65,7 +42,7 @@ int main(int argc, char *argv[])
 	int threads = 100;
 	int msgs = 100;
 	int wait = 0;
-	int o;
+	int o = -1;
 	const char *optstring = "t:m:w:";
 	while ((o = getopt(argc, argv, optstring)) != -1)
 	{

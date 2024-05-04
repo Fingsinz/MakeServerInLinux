@@ -43,7 +43,7 @@ void Acceptor::acceptConnection()
 	Socket *clientSock = new Socket(mSocket->accept(clientAddr));
 
 	// 打印有关新客户端连接的信息
-	std::cout << "[New client " << clientSock->getFd() << " ]:\t(" <<
+	std::cout << "[New Client " << clientSock->getFd() << " ]:\t(" <<
 		inet_ntoa(clientAddr->getAddr().sin_addr) << " : " << ntohs(clientAddr->getAddr().sin_port) << ")\n";
 
 	clientSock->setNonBlocking();

@@ -19,7 +19,7 @@ private:
 	std::vector<EventLoop *> subReactors;					// 负责处理事件循环
 	std::map<int, Connection *> connections;				// 存储连接及其相应的文件描述符
 	ThreadPool *threadPool;									// 线程池
-	std::function<void(Connection *)> onConnectCallback;	// 连接的业务
+	std::function<void(Connection *)> onConnectionCallback;	// 连接的业务逻辑
 
 public:
 	explicit Server(EventLoop *loop);
@@ -29,11 +29,11 @@ public:
 	DISALLOW_COPY_AND_MOVE(Server);
 
 	/**
-	 * @brief 处理给定文件描述符的读取事件
+	 * @brief 设置服务器的业务逻辑
 	 *
-	 * @param fd 要读取的文件描述
+	 * @param fn 业务逻辑函数
 	 */
-	void onConnect(std::function<void(Connection *)> onConnectCallback);
+	void onConnect(std::function<void(Connection *)> fn);
 
 	/**
 	 * @brief 处理与所提供套接字的新连接
@@ -47,5 +47,5 @@ public:
 	 *
 	 * @param _sockfd 需要删除其连接的套接字文件描述符
 	 */
-	void deleteConnection(int sockfd);
+	void deleteConnection(Socket *socket);
 };

@@ -1,10 +1,7 @@
-﻿#include "Buffer.h"
+﻿#include <iostream>
 #include "InetAddress.h"
 #include "Socket.h"
-#include "util.h"
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
+#include "Connection.h"
 
 int main()
 {
@@ -12,53 +9,23 @@ int main()
 	InetAddress *addr = new InetAddress("127.0.0.1", 1234);
 	sock->connect(addr);
 
-	int sockfd = sock->getFd();
-
-	Buffer *sendBuffer = new Buffer();
-	Buffer *readBuffer = new Buffer();
+	Connection *conn = new Connection(nullptr, sock);
 
 	while (true)
 	{
-		fprintf(stdout, "[Client sent]:\t");
-		sendBuffer->getline();
-		ssize_t writeLen = write(sockfd, sendBuffer->c_str(), sendBuffer->size());
-
-		if (writeLen == -1)
+		conn->getlineSendBuffer();
+		conn->write();
+		if (conn->getState() == Connection::State::Closed)
 		{
-			fprintf(stdout, "[Error]:\tSocket already disconnected\n");
+			conn->close();
 			break;
 		}
-
-		int alreadyRead = 0;
-		char buf[1024];
-
-		while (true)
-		{
-			bzero(buf, sizeof(buf));
-			ssize_t readLen = read(sockfd, buf, sizeof(buf));
-
-			if (readLen > 0)
-			{
-				readBuffer->append(buf, readLen);
-				alreadyRead += readLen;
-			}
-
-			else if (readLen == 0)
-			{
-				fprintf(stdout, "[Error]:\tServer disconnected\n");
-				exit(EXIT_SUCCESS);
-			}
-
-			if (alreadyRead >= sendBuffer->size())
-			{
-				fprintf(stdout, "[Message]:\t%s\n", readBuffer->c_str());
-				break;
-			}
-		}
-		readBuffer->clear();
+		conn->read();
+		std::cout << "[Received]\t"  << conn->readBuffer() << std::endl;
 	}
 
-	delete addr;
+	delete conn;
 	delete sock;
+	delete addr;
 	return 0;
 }

@@ -49,6 +49,11 @@ void Socket::setNonBlocking()
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 }
 
+bool Socket::isNonBlocking()
+{
+	return (fcntl(fd, F_GETFL) & O_NONBLOCK) != 0;
+}
+
 int Socket::accept(InetAddress *_addr)
 {
 	//定义一个sockaddr_in结构来保存客户端地址信息

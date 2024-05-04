@@ -22,8 +22,8 @@ foreach (test_source ${TEST_SOURCES})
     add_dependencies(build-tests ${test_name})
     add_dependencies(check-tests ${test_name})
 
-    # 将“day12_shared”库链接到可执行测试文件
-    target_link_libraries(${test_name} day12_shared)
+    # 将“network_shared”库链接到可执行测试文件
+    target_link_libraries(${test_name} network_shared)
 
     # 设置测试目标的属性，指定输出目录和运行测试的命令
     set_target_properties(${test_name}

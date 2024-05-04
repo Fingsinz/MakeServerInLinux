@@ -4,12 +4,13 @@
 #include "Socket.h"
 #include "Connection.h"
 #include "ThreadPool.h"
+#include "util.h"
 #include <functional>
 #include <unistd.h>
 
 constexpr int READ_BUFFER = 1024;
 
-Server::Server(EventLoop *loop) : mainReactor(loop), acceptor(nullptr)
+Server::Server(EventLoop *loop) : mainReactor(loop), acceptor(nullptr), threadPool(nullptr)
 {
 	// 使用给定的事件循环创建一个新的Acceptor对象
 	acceptor = new Acceptor(mainReactor);
@@ -38,32 +39,31 @@ Server::~Server()
 	delete threadPool;
 }
 
-void Server::handleReadEvent(int fd)
-{}
+void Server::onConnect(std::function<void(Connection *)> fn)
+{
+	onConnectionCallback = std::move(fn);
+}
 
 void Server::newConnection(Socket *socket)
 {
-	if (socket->getFd() != -1)
-	{
-		int random = socket->getFd() % subReactors.size();
-		Connection *conn = new Connection(subReactors[random], socket);
-		std::function<void(int)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
-		conn->setDeleteConnectionCallback(cb);
-		connections[socket->getFd()] = conn;
-	}
+	errorif(socket == nullptr, "[Error]\t New Connection error");
+	int random = socket->getFd() % subReactors.size();
+	Connection *conn = new Connection(subReactors[random], socket);
+	std::function<void(Socket *)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
+	conn->setDeleteConnectionCallback(cb);
+	conn->setOnConnectionCallback(onConnectionCallback);
+	connections[socket->getFd()] = conn;
 }
 
-void Server::deleteConnection(int sockfd)
+void Server::deleteConnection(Socket *sock)
 {
-	if (sockfd != -1)
+	int sockfd = sock->getFd();
+	auto it = connections.find(sockfd);
+	if (it != connections.end())
 	{
-		auto it = connections.find(sockfd);
-		if (it != connections.end())
-		{
-			Connection *conn = connections[sockfd];
-			connections.erase(sockfd);
-			// close(sockfd);
-			delete conn;
-		}
+		Connection *conn = connections[sockfd];
+		connections.erase(sockfd);
+		delete conn;
+		conn = nullptr;
 	}
 }
