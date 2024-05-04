@@ -157,6 +157,13 @@ void Connection::readBlocking()
 	unsigned int rcvSize = 0;
 	socklen_t len = sizeof(rcvSize);
 
+	// 获取一个套接字的选项
+	// int getsockopt(int socket, int level, int optionName, void *optVal, socklen_t *optLen);
+	// int socket:			套接字
+	// int level:			选项所在的层，如有 SOL_SOCKET、IPPROTO_TCP 等
+	// int optionName:		需要获取的套接字选项名
+	// void *optVal:		指向存放选项值的空间
+	// socklen_t *optLen:	指向选项值空间的长度
 	getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvSize, &len);
 
 	char *buf = new char[rcvSize];
@@ -183,7 +190,6 @@ void Connection::readBlocking()
 		mState = State::Closed;
 	}
 
-	// Deallocate the buffer memory
 	delete[] buf;
 }
 
@@ -222,7 +228,7 @@ void Connection::writeNonBlocking()
 
 void Connection::writeBlocking()
 {
-	// 没有处理send_buffer_数据大于TCP写缓冲区，的情况，可能会有bug
+	// 没有处理 mSendBuffer 数据大于TCP写缓冲区的情况，可能会有bug
 	int sockfd = mSocket->getFd();
 	ssize_t writeLen = ::write(sockfd, mSendBuffer->c_str(), mSendBuffer->size());
 
