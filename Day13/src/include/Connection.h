@@ -124,11 +124,4 @@ public:
 	 * @return Socket
 	 */
 	Socket *getSocket();
-
-	/**
-	 * @brief 设置连接的业务逻辑
-	 *
-	 * @param fn 业务逻辑函数
-	 */
-	void onConnect(std::function<void()> fn);
 };

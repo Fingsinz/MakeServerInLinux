@@ -98,21 +98,15 @@ char const *Connection::sendBuffer()
 	return mSendBuffer->c_str();
 }
 
-
 void Connection::getlineSendBuffer()
 {
 	mSendBuffer->getline();
 }
 
-
 Socket *Connection::getSocket()
 {
 	return mSocket;
 }
-
-
-void Connection::onConnect(std::function<void()> fn)
-{}
 
 void Connection::readNonBlocking()
 {
