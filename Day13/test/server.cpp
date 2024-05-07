@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <arpa/inet.h>
 #include "Buffer.h"
 #include "Connection.h"
 #include "EventLoop.h"
@@ -9,20 +10,18 @@ int main()
 {
 	EventLoop *loop = new EventLoop();
 	Server *server = new Server(loop);
-	
-	server->onConnect([] (Connection *conn)
+
+	server->newConnect([] (Connection *conn) {
+		// 新连接
+		std::cout << "[New Client " << conn->getSocket()->getFd() << " ]:\t\n";
+		});
+
+	server->onMessage([] (Connection *conn)
 		{
-			// 从客户端读取数据
-			conn->read();
-			if(conn->getState() == Connection::State::Closed)
-			{
-				conn->close();
-				return;
-			}
+			// Echo 服务器的业务
 			std::cout << "[Received from " << conn->getSocket()->getFd() << "]\t" << conn->readBuffer() << std::endl;
-			conn->setSentBuffer(conn->readBuffer());
-			// 回写数据
-			conn->write();
+			if (conn->getState() == Connection::State::Connected)
+				conn->send(conn->readBuffer());
 		});
 
 	loop->loop();

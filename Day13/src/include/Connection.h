@@ -23,12 +23,13 @@ public:
 private:
 	EventLoop *mLoop;											// EventLoop指针
 	Socket *mSocket;											// Socket指针
-	Channel *mChannel { nullptr };								// Channel指针
+	Channel *mChannel{ nullptr };								// Channel指针
 	Buffer *mReadBuffer{ nullptr };								// 读缓冲区
 	Buffer *mSendBuffer{ nullptr };								// 写缓冲区
-	State mState { Invalid };									// 连接状态
+	State mState{ Invalid };									// 连接状态
 	std::function<void(Socket *)> mDeleteConnectionCallback;	// 删除连接的回调函数
-	std::function<void(Connection *)> mOnConnectCallback;		// 业务逻辑回调函数
+	std::function<void(Connection *)> mOnConnectCallback;		// 连接建立时的回调函数
+	std::function<void(Connection *)> mOnMessageCallback;		// 业务逻辑回调函数
 
 	void readNonBlocking();		// 非阻塞读
 	void writeNonBlocking();	// 非阻塞写
@@ -53,6 +54,13 @@ public:
 	void write();
 
 	/**
+	 * @brief 发送信息
+	 *
+	 * @param msg 信息
+	 */
+	void send(std::string msg);
+
+	/**
 	 * @brief 设置连接时的业务逻辑回调函数
 	 *
 	 * @param callback 回调函数
@@ -60,11 +68,23 @@ public:
 	void setOnConnectionCallback(std::function<void(Connection *)> const &callback);
 
 	/**
+	 * @brief 将回调函数设置为在收到消息时调用
+	 *
+	 * @param callback 接收到消息时调用的函数
+	 */
+	void setOnMessageCallback(std::function<void(Connection *)> const &callback);
+
+	/**
 	 * @brief 设置删除连接时要调用的回调函数
 	 *
 	 * @param _callback 删除连接时要调用的回调函数
 	 */
 	void setDeleteConnectionCallback(std::function<void(Socket *)> const &callback);
+
+	/**
+	 * @brief 该函数表示业务逻辑。
+	 */
+	void business();
 
 	/**
 	 * @brief 获取当前连接状态

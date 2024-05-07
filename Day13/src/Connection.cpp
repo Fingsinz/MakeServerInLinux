@@ -11,7 +11,7 @@ Connection::Connection(EventLoop *loop, Socket *sock) : mLoop(loop), mSocket(soc
 {
 	if (mLoop != nullptr)
 	{
-		mChannel = new Channel(mLoop, mSocket->getFd());
+		mChannel = new Channel(mLoop, mSocket);
 		mChannel->useET();
 		mChannel->enableReading();
 	}
@@ -24,7 +24,7 @@ Connection::~Connection()
 {
 	if (mLoop != nullptr)
 		delete mChannel;
-	
+
 	delete mSocket;
 	delete mReadBuffer;
 	delete mSendBuffer;
@@ -52,15 +52,34 @@ void Connection::write()
 	mSendBuffer->clear();
 }
 
+void Connection::send(std::string msg)
+{
+	setSentBuffer(msg.c_str());
+	write();
+}
+
 void Connection::setOnConnectionCallback(std::function<void(Connection *)> const &callback)
 {
 	mOnConnectCallback = callback;
-	mChannel->setReadCallback([this] () { mOnConnectCallback(this); });
+	// mChannel->setReadCallback([this] () { mOnConnectCallback(this); });
 }
 
 void Connection::setDeleteConnectionCallback(std::function<void(Socket *)> const &callback)
 {
 	mDeleteConnectionCallback = callback;
+}
+
+void Connection::setOnMessageCallback(std::function<void(Connection *)> const &callback)
+{
+	mOnMessageCallback = callback;
+	std::function<void()> busi = std::bind(&Connection::business, this);
+	mChannel->setReadCallback(busi);
+}
+
+void Connection::business()
+{
+	read();
+	mOnMessageCallback(this);
 }
 
 Connection::State Connection::getState()

@@ -16,7 +16,7 @@ Acceptor::Acceptor(EventLoop *loop) : mLoop(loop), mSocket(nullptr), mAcceptChan
 	mSocket->listen();
 
 	// 创建一个接受连接的新Channel
-	mAcceptChannel = new Channel(mLoop, mSocket->getFd());
+	mAcceptChannel = new Channel(mLoop, mSocket);
 
 	// 定义一个用于接受Channel的回调函数，并设置
 	std::function<void()> cb = std::bind(&Acceptor::acceptConnection, this);
@@ -42,13 +42,10 @@ void Acceptor::acceptConnection()
 	//通过使用客户端地址接受来自服务器套接字的连接，创建一个新的Socket对象
 	Socket *clientSock = new Socket(mSocket->accept(clientAddr));
 
-	// 打印有关新客户端连接的信息
-	std::cout << "[New Client " << clientSock->getFd() << " ]:\t(" <<
-		inet_ntoa(clientAddr->getAddr().sin_addr) << " : " << ntohs(clientAddr->getAddr().sin_port) << ")\n";
-
 	clientSock->setNonBlocking();
 
-	mNewConnectionCallback(clientSock);
+	if (mNewConnectionCallback)
+		mNewConnectionCallback(clientSock);
 	delete clientAddr;
 }
 

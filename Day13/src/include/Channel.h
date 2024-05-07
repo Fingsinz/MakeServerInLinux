@@ -10,9 +10,9 @@ class Channel
 {
 private:
 	EventLoop *mLoop;			// 指向与之关联的事件循环的指针
-	int mFd;					// 与之关联的文件描述符
-	uint32_t mEvents { 0 };		// 希望监听的事件
-	uint32_t mReady { 0 };		// 用于存储就绪事件
+	Socket *mSocket;			// 与之关联的文件描述符
+	uint32_t mEvents{ 0 };		// 希望监听的事件
+	uint32_t mReady{ 0 };		// 用于存储就绪事件
 	bool inEpoll;				// 指示文件描述符是否在epoll集合中
 
 	// 发生事件时执行的回调函数
@@ -20,7 +20,7 @@ private:
 	std::function<void()> writeCallback;
 
 public:
-	explicit Channel(EventLoop *loop, int fd);
+	explicit Channel(EventLoop *loop, Socket *socket);
 	~Channel();
 
 	// 禁止拷贝和移动
@@ -37,11 +37,11 @@ public:
 	void enableReading();
 
 	/**
-	 * @brief 获取文件描述符
+	 * @brief 获取Socket
 	 *
-	 * @return int 类型，文件描述符
+	 * @return Socket
 	 */
-	int getFd();
+	Socket *getSocket();
 
 	/**
 	 * @brief 获取希望监听事件

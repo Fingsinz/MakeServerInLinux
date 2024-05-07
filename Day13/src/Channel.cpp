@@ -1,17 +1,17 @@
 ﻿#include "Channel.h"
 #include "EventLoop.h"
+#include "Socket.h"
 #include <unistd.h>
 
-Channel::Channel(EventLoop *loop, int fd) : mLoop(loop), mFd(fd),
+Channel::Channel(EventLoop *loop, Socket *socket) : mLoop(loop), mSocket(socket),
 mEvents(0), mReady(0), inEpoll(false)
 {}
 
 Channel::~Channel()
 {
-	if (mFd != -1)
+	if (mSocket->getFd() != -1)
 	{
-		close(mFd);
-		mFd = -1;
+		close(mSocket->getFd());
 	}
 }
 
@@ -30,9 +30,9 @@ void Channel::enableReading()
 	mLoop->updateChannel(this);
 }
 
-int Channel::getFd()
+Socket *Channel::getSocket()
 {
-	return mFd;
+	return mSocket;
 }
 
 uint32_t Channel::getEvents()

@@ -1,5 +1,6 @@
 ﻿#include "Channel.h"
 #include "Epoll.h"
+#include "Socket.h"
 #include "util.h"
 #include <unistd.h>
 #include <cstring>
@@ -29,6 +30,7 @@ vector<Channel *> Epoll::poll(int timeout)
 	vector<Channel *> activeEvents;
 	int nfds = epoll_wait(mEpFd, mEvents, maxEvents, timeout);
 	errorif(nfds == -1, "epoll wait error");
+
 	for (int i = 0; i < nfds; ++i)
 	{
 		Channel *channel = (Channel *)mEvents[i].data.ptr;
@@ -41,7 +43,7 @@ vector<Channel *> Epoll::poll(int timeout)
 
 void Epoll::updateChannel(Channel *channel)
 {
-	int fd = channel->getFd();
+	int fd = channel->getSocket()->getFd();
 	struct epoll_event ev;
 	bzero(&ev, sizeof(ev));
 	ev.data.ptr = channel;
@@ -59,7 +61,7 @@ void Epoll::updateChannel(Channel *channel)
 
 void Epoll::deleteChannel(Channel *channel)
 {
-	int fd = channel->getFd();
+	int fd = channel->getSocket()->getFd();
 	errorif(epoll_ctl(mEpFd, EPOLL_CTL_DEL, fd, nullptr) == -1, "epoll delete error");
 	channel->setInEpoll(false);
 }
