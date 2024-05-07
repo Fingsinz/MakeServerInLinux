@@ -9,11 +9,11 @@ class EventLoop;
 class Channel
 {
 private:
-	EventLoop *mLoop;	// 指向与之关联的事件循环的指针
-	int mFd;				// 与之关联的文件描述符
-	uint32_t mEvents;	// 希望监听的事件
-	uint32_t mReady;		// 用于存储就绪事件
-	bool inEpoll;		// 指示文件描述符是否在epoll集合中
+	EventLoop *mLoop;			// 指向与之关联的事件循环的指针
+	int mFd;					// 与之关联的文件描述符
+	uint32_t mEvents { 0 };		// 希望监听的事件
+	uint32_t mReady { 0 };		// 用于存储就绪事件
+	bool inEpoll;				// 指示文件描述符是否在epoll集合中
 
 	// 发生事件时执行的回调函数
 	std::function<void()> readCallback;
