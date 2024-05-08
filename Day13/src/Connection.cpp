@@ -156,7 +156,7 @@ void Connection::readNonBlocking()
 		// EOF，表示客户端断开连接
 		else if (readLen == 0)
 		{
-			std::cout << "[Client " << sockfd << " ]\tdisconnected\n";
+			std::cout << "[Client " << sockfd << " disconnected]\n";
 			mState = State::Closed;
 			break;
 		}
