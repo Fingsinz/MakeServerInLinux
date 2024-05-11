@@ -13,7 +13,7 @@ Connection::Connection(EventLoop *loop, Socket *sock) : mLoop(loop), mSocket(soc
 	{
 		mChannel = new Channel(mLoop, mSocket);
 		mChannel->useET();
-		mChannel->enableReading();
+		mChannel->enableRead();
 	}
 	mReadBuffer = new Buffer();
 	mSendBuffer = new Buffer();

@@ -10,6 +10,7 @@ EventLoop::EventLoop() : ep(nullptr), quit(false)
 
 EventLoop::~EventLoop()
 {
+	quit = true;
 	delete ep;
 }
 
@@ -29,4 +30,9 @@ void EventLoop::loop()
 void EventLoop::updateChannel(Channel *channel)
 {
 	ep->updateChannel(channel);
+}
+
+void EventLoop::deleteChannel(Channel *channel)
+{
+	ep->deleteChannel(channel);
 }

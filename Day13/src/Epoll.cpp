@@ -34,7 +34,17 @@ vector<Channel *> Epoll::poll(int timeout)
 	for (int i = 0; i < nfds; ++i)
 	{
 		Channel *channel = (Channel *)mEvents[i].data.ptr;
-		channel->setReady(mEvents[i].events);
+		int events = mEvents[i].events;
+
+		if(events & EPOLLIN)
+			channel->setReadyEvents(EPOLLIN);
+
+		if (events & EPOLLOUT)
+			channel->setReadyEvents(EPOLLOUT);
+
+		if(events & EPOLLET)
+			channel->setReadyEvents(EPOLLET);
+
 		activeEvents.push_back(channel);
 	}
 
@@ -47,21 +57,28 @@ void Epoll::updateChannel(Channel *channel)
 	struct epoll_event ev;
 	bzero(&ev, sizeof(ev));
 	ev.data.ptr = channel;
-	ev.events = channel->getEvents();
-	if (!channel->getInEpoll())
+	
+	if(channel->getListenEvents() & EPOLLIN)
+		ev.events |= EPOLLIN | EPOLLPRI;
+
+	if (channel->getListenEvents() & EPOLLOUT)
+		ev.events |= EPOLLOUT;
+
+	if (channel->getListenEvents() & EPOLLET)
+		ev.events |= EPOLLET;
+	
+	if (!channel->getExist())
 	{
 		errorif(epoll_ctl(mEpFd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add error");
-		channel->setInEpoll();
+		channel->setExist(true);
 	}
 	else
-	{
 		errorif(epoll_ctl(mEpFd, EPOLL_CTL_MOD, fd, &ev) == -1, "epoll update error");
-	}
 }
 
 void Epoll::deleteChannel(Channel *channel)
 {
 	int fd = channel->getSocket()->getFd();
 	errorif(epoll_ctl(mEpFd, EPOLL_CTL_DEL, fd, nullptr) == -1, "epoll delete error");
-	channel->setInEpoll(false);
+	channel->setExist(false);
 }

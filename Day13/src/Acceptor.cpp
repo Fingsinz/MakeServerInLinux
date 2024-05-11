@@ -23,7 +23,7 @@ Acceptor::Acceptor(EventLoop *loop) : mLoop(loop), mSocket(nullptr), mAcceptChan
 	mAcceptChannel->setReadCallback(cb);
 
 	// 在接受通道上启用读事件
-	mAcceptChannel->enableReading();
+	mAcceptChannel->enableRead();
 
 	delete addr;
 }

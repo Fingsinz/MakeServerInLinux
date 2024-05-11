@@ -3,67 +3,74 @@
 #include "Socket.h"
 #include <unistd.h>
 
-Channel::Channel(EventLoop *loop, Socket *socket) : mLoop(loop), mSocket(socket),
-mEvents(0), mReady(0), inEpoll(false)
+Channel::Channel(EventLoop *loop, Socket *socket) : mLoop(loop), mSocket(socket)
 {}
 
 Channel::~Channel()
 {
-	if (mSocket->getFd() != -1)
-	{
-		close(mSocket->getFd());
-	}
+	mLoop->deleteChannel(this);
 }
 
 void Channel::handleEvent()
 {
-	if (mReady & (EPOLLIN | EPOLLPRI))
+	if (mReadyEvents & EPOLLIN)
 		readCallback();
 
-	if (mReady & EPOLLOUT)
+	if (mReadyEvents & EPOLLOUT)
 		writeCallback();
 }
 
-void Channel::enableReading()
+void Channel::enableRead()
 {
-	mEvents |= EPOLLIN | EPOLLPRI;
+	mListenEvents |= EPOLLIN;
 	mLoop->updateChannel(this);
 }
 
-Socket *Channel::getSocket()
+void Channel::enableWrite()
 {
-	return mSocket;
-}
-
-uint32_t Channel::getEvents()
-{
-	return mEvents;
-}
-
-uint32_t Channel::getReady()
-{
-	return mReady;
-}
-
-bool Channel::getInEpoll()
-{
-	return inEpoll;
-}
-
-void Channel::setInEpoll(bool in)
-{
-	inEpoll = in;
+	mListenEvents |= EPOLLOUT;
+	mLoop->updateChannel(this);
 }
 
 void Channel::useET()
 {
-	mEvents |= EPOLLET;
+	mListenEvents |= EPOLLET;
 	mLoop->updateChannel(this);
 }
 
-void Channel::setReady(uint32_t ready)
+Socket *Channel::getSocket() const
 {
-	mReady = ready;
+	return mSocket;
+}
+
+uint32_t Channel::getListenEvents()
+{
+	return mListenEvents;
+}
+
+uint32_t Channel::getReadyEvents()
+{
+	return mReadyEvents;
+}
+
+void Channel::setReadyEvents(uint32_t events)
+{
+	if (events & EPOLLIN)
+		mReadyEvents |= EPOLLIN;
+	if (events & EPOLLOUT)
+		mReadyEvents |= EPOLLOUT;
+	if (events & EPOLLET)
+		mReadyEvents |= EPOLLET;
+}
+
+bool Channel::getExist() const
+{
+	return exist;
+}
+
+void Channel::setExist(bool _exist)
+{
+	exist = _exist;
 }
 
 void Channel::setReadCallback(std::function<void()> const &callback)

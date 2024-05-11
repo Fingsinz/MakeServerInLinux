@@ -9,15 +9,13 @@ class EventLoop;
 class Channel
 {
 private:
-	EventLoop *mLoop;			// 指向与之关联的事件循环的指针
-	Socket *mSocket;			// 与之关联的文件描述符
-	uint32_t mEvents{ 0 };		// 希望监听的事件
-	uint32_t mReady{ 0 };		// 用于存储就绪事件
-	bool inEpoll;				// 指示文件描述符是否在epoll集合中
-
-	// 发生事件时执行的回调函数
-	std::function<void()> readCallback;
-	std::function<void()> writeCallback;
+	EventLoop *mLoop;					// 指向与之关联的事件循环
+	Socket *mSocket;					// 与之关联的Socket
+	uint32_t mListenEvents{ 0 };		// 监听的事件
+	uint32_t mReadyEvents{ 0 };			// 就绪事件
+	bool exist{ false };				// 指示该Channel是否存在有效
+	std::function<void()> readCallback;	// 读回调
+	std::function<void()> writeCallback;// 写回调
 
 public:
 	explicit Channel(EventLoop *loop, Socket *socket);
@@ -32,56 +30,61 @@ public:
 	void handleEvent();
 
 	/**
-	 * @brief 启动监听
+	 * @brief 开启读操作
 	 */
-	void enableReading();
+	void enableRead();
 
 	/**
-	 * @brief 获取Socket
-	 *
-	 * @return Socket
+	 * @brief 开启写操作
 	 */
-	Socket *getSocket();
+	void enableWrite();
 
 	/**
-	 * @brief 获取希望监听事件
-	 *
-	 * @return 事件
-	 */
-	uint32_t getEvents();
-
-	/**
-	 * @brief 返回 ready值
-	 *
-	 * @return uint32_t ready值
-	 */
-	uint32_t getReady();
-
-	/**
-	 * @brief 检查文件描述符是否在epoll集合中
-	 *
-	 * @return 如果文件描述符在epoll集合中，则为True，否则为false
-	 */
-	bool getInEpoll();
-
-	/**
-	 * @brief 设置对象是否处于Epoll中。
-	 *
-	 * @param in 布尔值
-	 */
-	void setInEpoll(bool in = true);
-
-	/**
-	 * @brief 使用 ET 模式
+	 * @brief 使用ET
 	 */
 	void useET();
 
 	/**
-	 * @brief 设置Ready值
+	 * @brief 获取Socket
 	 *
-	 * @param ready ready值。
+	 * @return 返回Socket指针
 	 */
-	void setReady(uint32_t ready);
+	Socket *getSocket() const;
+
+	/**
+	 * @brief 获取监听事件
+	 *
+	 * @return 监听事件
+	 */
+	uint32_t getListenEvents();
+
+	/**
+	 * @brief 获取就绪事件
+	 *
+	 * @return 就绪事件
+	 */
+	uint32_t getReadyEvents();
+
+	/**
+	 * @brief 设置就绪事件
+	 *
+	 * @param 就绪事件
+	 */
+	void setReadyEvents(uint32_t events);
+
+	/**
+	 * @brief 检查有效性
+	 *
+	 * @return 如果存在则为true，否则为false
+	 */
+	bool getExist() const;
+
+	/**
+	 * @brief 设置有效性
+	 *
+	 * @param _exist 如果存在为真，否则为假
+	 */
+	void setExist(bool _exist);
 
 	/**
 	 * @brief 设置回调函数。
