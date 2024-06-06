@@ -23,7 +23,7 @@ public:
 
 	/**
 	 * @brief 接受连接
-	 * 
+	 *
 	 * @return 连接的情况
 	 */
 	FLAG acceptConnection() const;
@@ -33,5 +33,5 @@ public:
 	 *
 	 * @param callback 为新连接设置的回调函数。
 	 */
-	void setNewConnectionCallback(std::function<void(int *)> const &callback);
+	void setNewConnectionCallback(std::function<void(int)> const &callback);
 };

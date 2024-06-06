@@ -2,6 +2,7 @@
 #include "Socket.h"
 #include "Channel.h"
 #include "Server.h"
+#include <fcntl.h>
 #include <cassert>
 #include <iostream>
 
@@ -13,31 +14,33 @@ Acceptor::Acceptor(EventLoop *loop)
 	assert(mSocket->socketListen() == FL_SUCCESS);
 
 	mChannel = std::make_unique<Channel>(loop, mSocket.get());
+	std::function<void()> cb = std::bind(&Acceptor::acceptConnection, this);
+
+	mChannel->setReadCallback(cb);
+	mChannel->enableRead();
 }
 
 Acceptor::~Acceptor()
-{
-	delete mSocket;
-	delete mAcceptChannel;
-}
+{}
 
-void Acceptor::acceptConnection()
+FLAG Acceptor::acceptConnection() const
 {
-	// 创建一个新的InetAddress对象来存储客户端地址信息
-	InetAddress *clientAddr = new InetAddress();
+	int clientFd = -1;
 
 	//通过使用客户端地址接受来自服务器套接字的连接，创建一个新的Socket对象
-	Socket *clientSock = new Socket(mSocket->accept(clientAddr));
+	if (mSocket->socketAccept(clientFd) != FL_SUCCESS)
+		return FL_ACCEPTOR_ERROR;
 
-	clientSock->setNonBlocking();
+	// 新接受的连接设置为非阻塞
+	fcntl(clientFd, F_SETFL, fcntl(clientFd, F_GETFL) | O_NONBLOCK);
 
 	if (mNewConnectionCallback)
-		mNewConnectionCallback(clientSock);
-	delete clientAddr;
+		mNewConnectionCallback(clientFd);
+	return FL_SUCCESS;
 }
 
-void Acceptor::setNewConnectionCallback(std::function<void(Socket *)> const &callback)
+void Acceptor::setNewConnectionCallback(std::function<void(int)> const &callback)
 {
 	// 设置新的连接回调函数
-	mNewConnectionCallback = callback;
+	mNewConnectionCallback = std::move(callback);
 }
