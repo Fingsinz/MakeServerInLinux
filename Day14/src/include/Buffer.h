@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Macros.h"
+#include "Common.h"
 #include <string>
 
 class Buffer

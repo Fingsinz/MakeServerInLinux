@@ -1,8 +1,8 @@
 ﻿#include <iostream>
 #include <unistd.h>
 #include <cstring>
+#include "Buffer.h"
 #include "Connection.h"
-#include "InetAddress.h"
 #include "Socket.h"
 #include "ThreadPool.h"
 
@@ -11,9 +11,9 @@ using namespace std;
 void oneClient(int msgs, int wait)
 {
 	Socket *sock = new Socket();
-	InetAddress *addr = new InetAddress("127.0.0.1", 1234);
-	sock->connect(addr);
-	Connection *conn = new Connection(nullptr, sock);
+	sock->socketCreate();
+	sock->socketConnect("127.0.0.1", 1234);
+	Connection *conn = new Connection(nullptr, sock->getFd());
 
 	sleep(wait);
 
@@ -29,12 +29,11 @@ void oneClient(int msgs, int wait)
 			break;
 		}
 		conn->read();
-		std::cout << "[Msg From " << sock->getFd() << " Count " << count ++ << " ]\t" << conn->readBuffer() << std::endl;
+		std::cout << "[Msg From " << sock->getFd() << " Count " << count ++ << " ]\t" << conn->getReadBuffer()->c_str() << std::endl;
 	}
 
 	delete conn;
-	delete addr;
-	// delete sock; Connection 类会释放 Socket
+	delete sock;
 }
 
 int main(int argc, char *argv[])

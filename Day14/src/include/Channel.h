@@ -20,7 +20,7 @@ public:
 	// 禁止拷贝和移动
 	DISALLOW_COPY_AND_MOVE(Channel);
 
-	explicit Channel(int fd, EventLoop *loop);
+	explicit Channel(EventLoop *loop, int fd);
 	~Channel();
 
 	/**

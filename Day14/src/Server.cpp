@@ -54,7 +54,7 @@ FLAG Server::newConnection(int fd)
 {
 	errorif(fd == -1, "[Error]\t New Connection error");
 	uint64_t random = fd % subReactors.size();
-	std::unique_ptr<Connection> conn = std::make_unique<Connection>(fd, subReactors[random].get());
+	std::unique_ptr<Connection> conn = std::make_unique<Connection>(subReactors[random].get(), fd);
 	std::function<void(int)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
 
 	conn->setDeleteConnectionCallback(cb);

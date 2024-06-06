@@ -13,7 +13,7 @@ Acceptor::Acceptor(EventLoop *loop)
 	assert(mSocket->socketBind("127.0.0.1", 1234) == FL_SUCCESS);
 	assert(mSocket->socketListen() == FL_SUCCESS);
 
-	mChannel = std::make_unique<Channel>(loop, mSocket.get());
+	mChannel = std::make_unique<Channel>(loop, mSocket->getFd());
 	std::function<void()> cb = std::bind(&Acceptor::acceptConnection, this);
 
 	mChannel->setReadCallback(cb);

@@ -3,7 +3,7 @@
 #include "Socket.h"
 #include <unistd.h>
 
-Channel::Channel(int fd, EventLoop *loop) : mFd(fd), mLoop(loop), mListenEvents(0), mReadyEvents(0), exist(false)
+Channel::Channel(EventLoop *loop, int fd) : mFd(fd), mLoop(loop), mListenEvents(0), mReadyEvents(0), exist(false)
 {}
 
 Channel::~Channel()

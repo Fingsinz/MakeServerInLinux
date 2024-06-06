@@ -1,17 +1,14 @@
 ﻿#include <iostream>
-#include <arpa/inet.h>
 #include "Buffer.h"
 #include "Connection.h"
-#include "EventLoop.h"
 #include "Server.h"
 #include "Socket.h"
 
 int main()
 {
-	EventLoop *loop = new EventLoop();
-	Server *server = new Server(loop);
+	Server *server = new Server();
 
-	server->newConnect([] (Connection *conn) {
+	server->onConnect([] (Connection *conn) {
 		// 新连接
 		std::cout << "[New Client " << conn->getSocket()->getFd() << " ]:\t\n";
 		});
@@ -19,14 +16,13 @@ int main()
 	server->onMessage([] (Connection *conn)
 		{
 			// Echo 服务器的业务
-			std::cout << "[Received from " << conn->getSocket()->getFd() << "]\t" << conn->readBuffer() << std::endl;
+			std::cout << "[Received from " << conn->getSocket()->getFd() << "]\t" << conn->getReadBuffer()->c_str() << std::endl;
 			if (conn->getState() == Connection::State::Connected)
-				conn->send(conn->readBuffer());
+				conn->send(conn->getReadBuffer()->c_str());
 		});
 
-	loop->loop();
+	server->start();
 
 	delete server;
-	delete loop;
 	return 0;
 }

@@ -1,19 +1,21 @@
 ﻿#include <iostream>
-#include "InetAddress.h"
 #include "Socket.h"
+#include "Buffer.h"
 #include "Connection.h"
 
 int main()
 {
 	Socket *sock = new Socket();
-	InetAddress *addr = new InetAddress("127.0.0.1", 1234);
-	sock->connect(addr);
+	sock->socketCreate();
+	sock->socketConnect("127.0.0.1", 1234);
 
-	Connection *conn = new Connection(nullptr, sock);
+	Connection *conn = new Connection(nullptr, sock->getFd());
 
 	while (true)
 	{
-		conn->getlineSendBuffer();
+		std::string input;
+		std::getline(std::cin, input);
+		conn->setSentBuffer(input.c_str());
 		conn->write();
 		if (conn->getState() == Connection::State::Closed)
 		{
@@ -21,11 +23,10 @@ int main()
 			break;
 		}
 		conn->read();
-		std::cout << "[Received]\t"  << conn->readBuffer() << std::endl;
+		std::cout << "[Received]\t"  << conn->getReadBuffer()->c_str() << std::endl;
 	}
 
 	delete conn;
 	delete sock;
-	delete addr;
 	return 0;
 }
