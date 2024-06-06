@@ -1,7 +1,8 @@
 ﻿#pragma once
 
-#include "Macros.h"
+#include "Common.h"
 #include <functional>
+#include <memory>
 
 class Buffer;
 class EventLoop;
@@ -13,7 +14,7 @@ class Connection
 public:
 	enum State
 	{
-		Invalid = 1, // 初始无效状态
+		Invalid = 0, // 初始无效状态
 		Handshaking, // 握手过程中的状态
 		Connected,   // 连接建立
 		Closed,      // 连接关闭
@@ -21,127 +22,106 @@ public:
 	};
 
 private:
-	EventLoop *mLoop;											// EventLoop指针
-	Socket *mSocket;											// Socket指针
-	Channel *mChannel{ nullptr };								// Channel指针
-	Buffer *mReadBuffer{ nullptr };								// 读缓冲区
-	Buffer *mSendBuffer{ nullptr };								// 写缓冲区
+	//EventLoop *mLoop;											// EventLoop指针
+	std::unique_ptr<Socket> mSocket;							// Socket指针
+	std::unique_ptr<Channel> mChannel{ nullptr };				// Channel指针
+	std::unique_ptr<Buffer> mReadBuffer{ nullptr };				// 读缓冲区
+	std::unique_ptr<Buffer> mSendBuffer{ nullptr };				// 写缓冲区
+
 	State mState{ Invalid };									// 连接状态
-	std::function<void(Socket *)> mDeleteConnectionCallback;	// 删除连接的回调函数
-	std::function<void(Connection *)> mOnConnectCallback;		// 连接建立时的回调函数
+	std::function<void(int)> mDeleteConnectionCallback;			// 删除连接的回调函数
 	std::function<void(Connection *)> mOnMessageCallback;		// 业务逻辑回调函数
 
-	void readNonBlocking();		// 非阻塞读
-	void writeNonBlocking();	// 非阻塞写
-	void readBlocking();		// 阻塞读
-	void writeBlocking();		// 阻塞写
+	FLAG readNonBlocking();		// 非阻塞读
+	FLAG writeNonBlocking();	// 非阻塞写
+	FLAG readBlocking();		// 阻塞读
+	FLAG writeBlocking();		// 阻塞写
 
 public:
-	explicit Connection(EventLoop *loop, Socket *sock);
+	explicit Connection(EventLoop *loop, int fd);
 	~Connection();
 
 	// 禁止拷贝和移动
 	DISALLOW_COPY_AND_MOVE(Connection);
 
 	/**
-	 * @brief 读操作
+	 * @brief 从与连接相关联的套接字读取数据
+	 * 
+	 * @return FLAG 操作结果标记
 	 */
-	void read();
+	FLAG read();
 
 	/**
-	 * @brief 写操作
+	 * @brief 将数据写入与该连接相关联的套接字
+	 * 
+	 * @return FLAG 操作结果标记
 	 */
-	void write();
+	FLAG write();
 
 	/**
-	 * @brief 发送信息
-	 *
-	 * @param msg 信息
+	 * @brief 通过连接发送消息
+	 * 
+	 * @param msg 要发送的消息
+	 * @return FLAG 操作结果标记
 	 */
-	void send(std::string msg);
+	FLAG send(std::string msg);
 
 	/**
-	 * @brief 设置连接时的业务逻辑回调函数
-	 *
+	 * @brief 设置一个回调函数，在连接上接收到消息时调用
+	 * 
 	 * @param callback 回调函数
-	 */
-	void setOnConnectionCallback(std::function<void(Connection *)> const &callback);
-
-	/**
-	 * @brief 将回调函数设置为在收到消息时调用
-	 *
-	 * @param callback 接收到消息时调用的函数
 	 */
 	void setOnMessageCallback(std::function<void(Connection *)> const &callback);
 
 	/**
-	 * @brief 设置删除连接时要调用的回调函数
-	 *
-	 * @param _callback 删除连接时要调用的回调函数
+	 * @brief 设置一个回调函数，在需要删除连接时调用
+	 * 
+	 * @param callback 回调函数
 	 */
-	void setDeleteConnectionCallback(std::function<void(Socket *)> const &callback);
+	void setDeleteConnectionCallback(std::function<void(int)> const &callback);
 
 	/**
-	 * @brief 该函数表示业务逻辑。
+	 * @brief 与连接关联的业务逻辑
 	 */
 	void business();
 
 	/**
-	 * @brief 获取当前连接状态
-	 *
-	 * @return 当前状态
+	 * @brief 获取连接的状态
+	 * 
+	 * @return 状态
 	 */
 	State getState();
 
 	/**
-	 * @brief 关闭连接
+	 * @brief 关闭这个连接
 	 */
 	void close();
 
 	/**
-	 * @brief 设置写缓冲区
-	 *
-	 * @param str 字符串
+	 * @brief 设置要通过连接发送的缓冲区
+	 * 
+	 * @param str 要发送的缓冲区
 	 */
 	void setSentBuffer(char const *str);
 
 	/**
-	 * @brief 获取读缓冲区
-	 *
-	 * @return 读缓冲区
+	 * @brief 获取与该连接关联的读缓冲区
+	 * 
+	 * @return 指向读缓冲区的指针
 	 */
 	Buffer *getReadBuffer();
 
 	/**
-	 * @brief 获取读缓冲区内容
-	 *
-	 * @return 读缓冲区内容
-	 */
-	char const *readBuffer();
-
-	/**
-	 * @brief 获取写缓冲区
-	 *
-	 * @return 写缓冲区
+	 * @brief 获取与该连接关联的发送缓冲区
+	 * 
+	 * @return 指向写缓冲区的指针
 	 */
 	Buffer *getSendBuffer();
 
 	/**
-	 * @brief 获取写缓冲区内容
-	 *
-	 * @return 写缓冲区内容
+	 * @brief 获取与该连接关联的套接字
+	 * 
+	 * @return Socket指针
 	 */
-	char const *sendBuffer();
-
-	/**
-	 * @brief 获取一行写入写缓冲区
-	 */
-	void getlineSendBuffer();
-
-	/**
-	 * @brief 获取连接的Socket
-	 *
-	 * @return Socket
-	 */
-	Socket *getSocket();
+Socket *getSocket();
 };

@@ -6,72 +6,77 @@
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
+#include <cassert>
 
-Connection::Connection(EventLoop *loop, Socket *sock) : mLoop(loop), mSocket(sock)
+Connection::Connection(EventLoop *loop, int fd)
 {
-	if (mLoop != nullptr)
+	mSocket = std::make_unique<Socket>();
+	mSocket->setFd(fd);
+
+	if (loop != nullptr)
 	{
-		mChannel = new Channel(mLoop, mSocket);
+		mChannel = std::make_unique<Channel>(loop, fd);
 		mChannel->useET();
 		mChannel->enableRead();
 	}
-	mReadBuffer = new Buffer();
-	mSendBuffer = new Buffer();
+	mReadBuffer = std::make_unique<Buffer>();
+	mSendBuffer = std::make_unique<Buffer>();
+
 	mState = State::Connected;
 }
 
 Connection::~Connection()
-{
-	if (mLoop != nullptr)
-		delete mChannel;
+{}
 
-	delete mSocket;
-	delete mReadBuffer;
-	delete mSendBuffer;
-}
-
-void Connection::read()
+FLAG Connection::read()
 {
-	errorif(mState != State::Connected, "[Error]\tConnection state is disconnected!");
+	if (mState != State::Connected)
+	{
+		errorif(true, "[Error]\tConnection state is disconnected!");
+		return FL_CONNECTION_ERROR;
+	}
+	assert(mState == State::Connected and "[Error]\tConnection state is disconnected!");
+
 	mReadBuffer->clear();
 	if (mSocket->isNonBlocking())
-		readNonBlocking();
+		return readNonBlocking();
 	else
-		readBlocking();
+		return readBlocking();
 }
 
-void Connection::write()
+FLAG Connection::write()
 {
-	errorif(mState != State::Connected, "[Error]\tConnection state is disconnected!");
+	if (mState != State::Connected)
+	{
+		errorif(true, "[Error]\tConnection state is disconnected!");
+		return FL_CONNECTION_ERROR;
+	}
+	FLAG flag = FL_UNDIFINED;
 
 	if (mSocket->isNonBlocking())
-		writeNonBlocking();
+		flag = writeNonBlocking();
 	else
-		writeBlocking();
+		flag = writeBlocking();
 
 	mSendBuffer->clear();
+	return flag;
 }
 
-void Connection::send(std::string msg)
+FLAG Connection::send(std::string msg)
 {
 	setSentBuffer(msg.c_str());
 	write();
+	return FL_SUCCESS;
 }
 
-void Connection::setOnConnectionCallback(std::function<void(Connection *)> const &callback)
+void Connection::setDeleteConnectionCallback(std::function<void(int)> const &callback)
 {
-	mOnConnectCallback = callback;
-	// mChannel->setReadCallback([this] () { mOnConnectCallback(this); });
-}
-
-void Connection::setDeleteConnectionCallback(std::function<void(Socket *)> const &callback)
-{
-	mDeleteConnectionCallback = callback;
+	mDeleteConnectionCallback = std::move(callback);
 }
 
 void Connection::setOnMessageCallback(std::function<void(Connection *)> const &callback)
 {
-	mOnMessageCallback = callback;
+	mOnMessageCallback = std::move(callback);
 	std::function<void()> busi = std::bind(&Connection::business, this);
 	mChannel->setReadCallback(busi);
 }
@@ -89,7 +94,7 @@ Connection::State Connection::getState()
 
 void Connection::close()
 {
-	mDeleteConnectionCallback(mSocket);
+	mDeleteConnectionCallback(mSocket->getFd());
 }
 
 void Connection::setSentBuffer(char const *str)
@@ -99,35 +104,20 @@ void Connection::setSentBuffer(char const *str)
 
 Buffer *Connection::getReadBuffer()
 {
-	return mReadBuffer;
-}
-
-char const *Connection::readBuffer()
-{
-	return mReadBuffer->c_str();
+	return mReadBuffer.get();
 }
 
 Buffer *Connection::getSendBuffer()
 {
-	return mSendBuffer;
-}
-
-char const *Connection::sendBuffer()
-{
-	return mSendBuffer->c_str();
-}
-
-void Connection::getlineSendBuffer()
-{
-	mSendBuffer->getline();
+	return mSendBuffer.get();
 }
 
 Socket *Connection::getSocket()
 {
-	return mSocket;
+	return mSocket.get();
 }
 
-void Connection::readNonBlocking()
+FLAG Connection::readNonBlocking()
 {
 	int sockfd = mSocket->getFd();
 	char buf[1024];
@@ -158,6 +148,7 @@ void Connection::readNonBlocking()
 		{
 			std::cout << "[Client " << sockfd << " disconnected]\n";
 			mState = State::Closed;
+			close();
 			break;
 		}
 
@@ -165,31 +156,19 @@ void Connection::readNonBlocking()
 		{
 			std::cout << "[Error]\tOther error on client fd: " << sockfd << "\n";
 			mState = State::Closed;
+			close();
 			break;
 		}
 	}
+	return FL_SUCCESS;
 }
 
-void Connection::readBlocking()
+FLAG Connection::readBlocking()
 {
 	int sockfd = mSocket->getFd();
-	unsigned int rcvSize = 0;
-	socklen_t len = sizeof(rcvSize);
-
-	// 获取一个套接字的选项
-	// int getsockopt(int socket, int level, int optionName, void *optVal, socklen_t *optLen);
-	// int socket:			套接字
-	// int level:			选项所在的层，如有 SOL_SOCKET、IPPROTO_TCP 等
-	// int optionName:		需要获取的套接字选项名
-	// void *optVal:		指向存放选项值的空间
-	// socklen_t *optLen:	指向选项值空间的长度
-	getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvSize, &len);
-
-	char *buf = new char[rcvSize];
-	bzero(buf, rcvSize);
-
-	// 从套接字读取数据到缓冲区
-	ssize_t readLen = ::read(sockfd, buf, rcvSize);
+	ssize_t dataSize = mSocket->recvBufSize();
+	char buf[1024];
+	ssize_t readLen = ::read(sockfd, buf, sizeof(buf));
 
 	if (readLen > 0)
 	{
@@ -209,10 +188,10 @@ void Connection::readBlocking()
 		mState = State::Closed;
 	}
 
-	delete[] buf;
+	return FL_SUCCESS;
 }
 
-void Connection::writeNonBlocking()
+FLAG Connection::writeNonBlocking()
 {
 	int sockfd = mSocket->getFd();
 	char *buf = new char[mSendBuffer->size()];
@@ -243,9 +222,10 @@ void Connection::writeNonBlocking()
 	}
 
 	delete[] buf;
+	return FL_SUCCESS;
 }
 
-void Connection::writeBlocking()
+FLAG Connection::writeBlocking()
 {
 	// 没有处理 mSendBuffer 数据大于TCP写缓冲区的情况，可能会有bug
 	int sockfd = mSocket->getFd();
@@ -256,4 +236,5 @@ void Connection::writeBlocking()
 		std::cout << "[Error]\tOther error on client fd: " << sockfd << "\n";
 		mState = State::Closed;
 	}
+	return FL_SUCCESS;
 }
