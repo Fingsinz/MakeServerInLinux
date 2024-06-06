@@ -148,7 +148,7 @@ FLAG Connection::readNonBlocking()
 		{
 			std::cout << "[Client " << sockfd << " disconnected]\n";
 			mState = State::Closed;
-			close();
+			//close();	// 启用这句会段错误
 			break;
 		}
 
