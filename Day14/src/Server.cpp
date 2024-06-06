@@ -10,39 +10,34 @@
 
 constexpr int READ_BUFFER = 1024;
 
-Server::Server(EventLoop *loop) : mainReactor(loop), acceptor(nullptr), threadPool(nullptr)
+Server::Server()
 {
-	if (mainReactor == nullptr)
-		errorif(true, "[Error]\tMainReactor is null");
-
-	// 使用给定的事件循环创建一个新的Acceptor对象
-	acceptor = new Acceptor(mainReactor);
-
-	// 定义一个回调函数cb，它接受一个Socket指针作为参数
-	std::function<void(Socket *)> cb = std::bind(&Server::newConnection, this, std::placeholders::_1);
-
-	// 将acceptor的新连接回调设置为已定义的回调函数
+	mainReactor = std::make_unique<EventLoop>();
+	acceptor = std::make_unique<Acceptor>(mainReactor.get());
+	std::function<void(int)> cb = std::bind(&Server::newConnection, this, std::placeholders::_1);
 	acceptor->setNewConnectionCallback(cb);
 
-	int size = static_cast<int>(std::thread::hardware_concurrency());
-	threadPool = new ThreadPool(size);
-	for (int i = 0; i < size; ++ i)
-		subReactors.emplace_back(new EventLoop());
+	unsigned int size = std::thread::hardware_concurrency();
+	threadPool = std::make_unique<ThreadPool>(size);
 
-	for (int i = 0; i < size; ++ i)
+	for (size_t i = 0; i < size; ++ i)
 	{
-		std::function<void()> subLoop = std::bind(&EventLoop::loop, subReactors[i]);
-		threadPool->add(subLoop);
+		std::unique_ptr<EventLoop> subReactor = std::make_unique<EventLoop>();
+		subReactors.emplace_back(std::move(subReactor));
 	}
 }
 
 Server::~Server()
-{
-	for (EventLoop *e : subReactors)
-		delete e;
+{}
 
-	delete acceptor;
-	delete threadPool;
+void Server::start()
+{
+	for (size_t i = 0; i < subReactors.size(); ++ i)
+	{
+		std::function<void()> subLoop = std::bind(&EventLoop::loop, subReactors[i].get());
+		threadPool->add(std::move(subLoop));
+	}
+	mainReactor->loop();
 }
 
 void Server::onConnect(std::function<void(Connection *)> fn)
@@ -55,38 +50,29 @@ void Server::onMessage(std::function<void(Connection *)> fn)
 	onMessageCallback = std::move(fn);
 }
 
-void Server::newConnect(std::function<void(Connection *)> fn)
+FLAG Server::newConnection(int fd)
 {
-	newConnectCallback = std::move(fn);
-}
+	errorif(fd == -1, "[Error]\t New Connection error");
+	uint64_t random = fd % subReactors.size();
+	std::unique_ptr<Connection> conn = std::make_unique<Connection>(fd, subReactors[random].get());
+	std::function<void(int)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
 
-void Server::newConnection(Socket *socket)
-{
-	errorif(socket->getFd() == -1, "[Error]\t New Connection error");
-	int random = socket->getFd() % subReactors.size();
-	Connection *conn = new Connection(subReactors[random], socket);
-
-	std::function<void(Socket *)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
 	conn->setDeleteConnectionCallback(cb);
-
-	// conn->setOnConnectionCallback(onConnectionCallback);
 	conn->setOnMessageCallback(onMessageCallback);
 
-	connections[socket->getFd()] = conn;
+	connections[fd] = std::move(conn);
 
-	if (newConnectCallback)
-		newConnectCallback(conn);
+	if (onConnectionCallback)
+		onConnectionCallback(connections[fd].get());
+	return FL_SUCCESS;
 }
 
-void Server::deleteConnection(Socket *sock)
+FLAG Server::deleteConnection(int fd)
 {
-	int sockfd = sock->getFd();
-	auto it = connections.find(sockfd);
+	auto it = connections.find(fd);
 	if (it != connections.end())
 	{
-		Connection *conn = connections[sockfd];
-		connections.erase(sockfd);
-		delete conn;
-		conn = nullptr;
+		connections.erase(fd);
 	}
+	return FL_SUCCESS;
 }

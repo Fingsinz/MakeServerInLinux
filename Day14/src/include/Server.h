@@ -2,7 +2,8 @@
 
 #include "Common.h"
 #include <functional>
-#include <map>
+#include <memory>
+#include <unordered_map>
 #include <vector>
 
 class Acceptor;
@@ -14,54 +15,50 @@ class ThreadPool;
 class Server
 {
 private:
-	EventLoop *mainReactor;									// 只负责接受连接，然后分发给一个subReactor
-	Acceptor *acceptor;										// 连接接受器
-	std::vector<EventLoop *> subReactors;					// 负责处理事件循环
-	std::map<int, Connection *> connections;				// 存储连接及其相应的文件描述符
-	ThreadPool *threadPool;									// 线程池
+	std::unique_ptr<EventLoop> mainReactor;					// 只负责接受连接，然后分发给一个subReactor
+	std::vector<std::unique_ptr<EventLoop>> subReactors;	// 处理事件循环
+	std::unique_ptr<Acceptor> acceptor;						// 连接接受器
+	std::unordered_map<int, std::unique_ptr<Connection>> connections;	// 存储连接及其相应的文件描述符
+	std::unique_ptr<ThreadPool> threadPool;					// 线程池
+
 	std::function<void(Connection *)> onConnectionCallback;	// 连接的业务逻辑
-	std::function<void(Connection *)> onMessageCallback;	// 消息的业务逻辑
-	std::function<void(Connection *)> newConnectCallback;	// 新连接的业务逻辑
+	std::function<void(Connection *)> onMessageCallback;	// 接收消息后的业务逻辑
 
 public:
-	explicit Server(EventLoop *loop);
+	Server();
 	~Server();
 
 	// 禁止拷贝和移动
 	DISALLOW_COPY_AND_MOVE(Server);
 
 	/**
-	 * @brief 设置服务器的业务逻辑
-	 *
-	 * @param fn 业务逻辑函数
+	 * @brief 启动服务器
+	 */
+	void start();
+
+	/**
+	 * @brief 设置新连接建立时的回调
+	 * @param fn 回调函数
 	 */
 	void onConnect(std::function<void(Connection *)> fn);
 
 	/**
-	 * @brief 设置接收消息时调用的回调函数
-	 *
+	 * @brief 设置接收消息时的回调
 	 * @param fn 回调函数
 	 */
 	void onMessage(std::function<void(Connection *)> fn);
 
 	/**
-	 * @brief 设置在建立新连接时调用的回调函数。
-	 *
-	 * @param fn 回调函数
+	 * @brief 处理与给定文件描述符的新连接
+	 * @param fd 新连接的文件描述符
+	 * @return Flag 表示操作结果
 	 */
-	void newConnect(std::function<void(Connection *)> fn);
+	FLAG newConnection(int fd);
 
 	/**
-	 * @brief 处理与所提供套接字的新连接
-	 *
-	 * @param _socket 表示新连接的套接字
+	 * @brief 删除与给定文件描述符的连接
+	 * @param fd 要删除的连接的文件描述符
+	 * @return Flag 表示操作结果
 	 */
-	void newConnection(Socket *socket);
-
-	/**
-	 * @brief 断开与提供的套接字关联的连接
-	 *
-	 * @param _sockfd 需要删除其连接的套接字文件描述符
-	 */
-	void deleteConnection(Socket *socket);
+	FLAG deleteConnection(int fd);
 };
