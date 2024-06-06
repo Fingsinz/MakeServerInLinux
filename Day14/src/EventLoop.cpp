@@ -3,20 +3,17 @@
 #include "EventLoop.h"
 #include <vector>
 
-EventLoop::EventLoop() : ep(nullptr), quit(false)
+EventLoop::EventLoop()
 {
-	ep = new Epoll();
+	ep = std::make_unique<Epoll>();
 }
 
 EventLoop::~EventLoop()
-{
-	quit = true;
-	delete ep;
-}
+{}
 
-void EventLoop::loop()
+void EventLoop::loop() const
 {
-	while (!quit)
+	while (true)
 	{
 		// 使用epoll实例轮询事件
 		std::vector<Channel *> channels = ep->poll();
@@ -27,12 +24,12 @@ void EventLoop::loop()
 	}
 }
 
-void EventLoop::updateChannel(Channel *channel)
+void EventLoop::updateChannel(Channel *channel) const
 {
 	ep->updateChannel(channel);
 }
 
-void EventLoop::deleteChannel(Channel *channel)
+void EventLoop::deleteChannel(Channel *channel) const
 {
 	ep->deleteChannel(channel);
 }
