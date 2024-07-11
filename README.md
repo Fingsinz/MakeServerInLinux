@@ -1,24 +1,24 @@
-# Ñ§×Å×öÒ»¸öLinux·şÎñÆ÷
+# å­¦ç€åšä¸€ä¸ªLinuxæœåŠ¡å™¨
 
-## Ç°ÑÔ
+## å‰è¨€
 
-**Reference£º[https://github.com/yuesong-feng/30dayMakeCppServer/](https://github.com/yuesong-feng/30dayMakeCppServer/)**
+**Referenceï¼š[https://github.com/yuesong-feng/30dayMakeCppServer/](https://github.com/yuesong-feng/30dayMakeCppServer/)ã€[https://github.com/Wlgls/30daysCppWebServer](https://github.com/Wlgls/30daysCppWebServer)**
 
-[Ñ§Ï°¼ÇÂ¼](https://www.fingsinz.space/2024/LinuxServerCpp/)
+[å­¦ä¹ è®°å½•](https://www.fingsinz.space/2024/LinuxServerCpp/)
 
-## Ä¿Â¼
+## ç›®å½•
 
-- Day1£º´Ósocket¿ªÊ¼
-- Day2£ºÍêÉÆ´úÂë£¬Êı¾İ¶ÁĞ´
-- Day3£º¸ß²¢·¢Ê¹ÓÃepoll
-- Day4£º·â×°³ÉÀà£¬³ÌĞòÄ£¿é»¯
-- Day5£ºÏò×ÅReactorÄ£Ê½×ª±ä
-- Day6£º°Ñ·şÎñÆ÷µÄ½ÓÊÜ³éÏó»¯
-- Day7£º°ÑTCPÁ¬½Ó³éÏó»¯
-- Day8£ºÏĞÀ´ÎŞÊÂ£¬Õû¸ö»º³åÇø
-- Day9: Ïß³Ì³Ø°¡Ïß³Ì³Ø
-- Day10:ÓĞÁËÏß³Ì³ØÖ®ºóµÄ¿¼ÂÇ
-- Day11:¸ÄĞ´³ÉÖ÷´ÓReactor¶àÏß³ÌÄ£Ê½
-- Day12:Ê¹ÓÃCMake½øĞĞ¹¤³Ì»¯
-- Day13:ÒµÎñÂß¼­×Ô¶¨Òå»¯
-- Day14:ÔÙ´ÎÖØ¹¹£¬¸æÒ»¶ÎÂä
+- Day1ï¼šä»socketå¼€å§‹
+- Day2ï¼šå®Œå–„ä»£ç ï¼Œæ•°æ®è¯»å†™
+- Day3ï¼šé«˜å¹¶å‘ä½¿ç”¨epoll
+- Day4ï¼šå°è£…æˆç±»ï¼Œç¨‹åºæ¨¡å—åŒ–
+- Day5ï¼šå‘ç€Reactoræ¨¡å¼è½¬å˜
+- Day6ï¼šæŠŠæœåŠ¡å™¨çš„æ¥å—æŠ½è±¡åŒ–
+- Day7ï¼šæŠŠTCPè¿æ¥æŠ½è±¡åŒ–
+- Day8ï¼šé—²æ¥æ— äº‹ï¼Œæ•´ä¸ªç¼“å†²åŒº
+- Day9ï¼šçº¿ç¨‹æ± å•Šçº¿ç¨‹æ± 
+- Day10ï¼šæœ‰äº†çº¿ç¨‹æ± ä¹‹åçš„è€ƒè™‘
+- Day11ï¼šæ”¹å†™æˆä¸»ä»Reactorå¤šçº¿ç¨‹æ¨¡å¼
+- Day12ï¼šä½¿ç”¨CMakeè¿›è¡Œå·¥ç¨‹åŒ–
+- Day13ï¼šä¸šåŠ¡é€»è¾‘è‡ªå®šä¹‰åŒ–
+- Day14ï¼šå†æ¬¡é‡æ„ï¼Œå‘Šä¸€æ®µè½
