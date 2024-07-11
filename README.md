@@ -2,9 +2,12 @@
 
 ## 前言
 
-**Reference：[https://github.com/yuesong-feng/30dayMakeCppServer/](https://github.com/yuesong-feng/30dayMakeCppServer/)、[https://github.com/Wlgls/30daysCppWebServer](https://github.com/Wlgls/30daysCppWebServer)**
+**Reference：**
 
-[学习记录](https://www.fingsinz.space/2024/LinuxServerCpp/)
+- [https://github.com/yuesong-feng/30dayMakeCppServer/](https://github.com/yuesong-feng/30dayMakeCppServer/)
+- [https://github.com/Wlgls/30daysCppWebServer](https://github.com/Wlgls/30daysCppWebServer)
+
+学习记录：[Linux 服务器编程入门尝试 - C++](https://www.fingsinz.space/2024/LinuxServerCpp/)
 
 ## 目录
 
