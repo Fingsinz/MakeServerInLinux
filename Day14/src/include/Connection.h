@@ -56,22 +56,56 @@ public:
      */
     void setOnCloseCallback(std::function<void(int)> const &callback);
 
+    /**
+     * @brief 设置发送缓冲区
+     * @param str 指向要设置为发送缓冲区的字符串的常量指针。
+     */
     void setSentBuf(char const *str);
 
+    /**
+     * @brief 获取读取缓冲区的指针
+     * @return Buffer* 返回读取缓冲区的指针。
+     */
     Buffer *getReadBuf();
 
+    /**
+     * @brief 获取发送缓冲区的指针
+     * @return Buffer* 返回发送缓冲区的指针。
+     */
     Buffer *getSentBuf();
 
+    /**
+     * @brief 处理接收到的消息
+     */
     void handleMessage();
 
+    /**
+     * @brief 处理连接关闭事件
+     */
     void handleClose();
 
+    /**
+     * @brief 获取当前状态
+     * @return State 返回当前状态。
+     */
     State getState() const;
 
+    /**
+     * @brief 获取事件循环的指针
+     * @return EventLoop* 返回事件循环的指针。
+     */
     EventLoop *getLoop() const;
 
+    /**
+     * @brief 获取文件描述符
+     * @return int 返回文件描述符。
+     */
     int getFd() const;
 
+    /**
+     * @brief 获取唯一标识符
+     * @return int 返回唯一标识符。
+     */
     int getId() const;
 
 private:
