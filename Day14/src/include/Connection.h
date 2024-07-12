@@ -109,20 +109,25 @@ public:
     int getId() const;
 
 private:
-    int mConnfd;
-    int mConnId;
+    int mConnfd;      // 连接的文件描述符
+    int mConnId;      // 连接的唯一标识符
+    State mState;     // 当前连接的状态
+    EventLoop *mLoop; // 所属的事件循环
 
-    State mState;
+    std::unique_ptr<Channel> mChannel; // 用于监听连接上的事件
+    std::unique_ptr<Buffer> mReadBuf;  // 用于存储读取的数据
+    std::unique_ptr<Buffer> mSendBuf;  // 用于存储待发送的数据
 
-    EventLoop *mLoop;
+    std::function<void(int)> onCloseCb;            // 连接关闭时的回调函数
+    std::function<void(Connection *)> onMessageCb; // 接收到消息时的回调函数
 
-    std::unique_ptr<Channel> mChannel;
-    std::unique_ptr<Buffer> mReadBuf;
-    std::unique_ptr<Buffer> mSendBuf;
-
-    std::function<void(int)> onCloseCb;
-    std::function<void(Connection *)> onMessageCb;
-
+    /**
+     * @brief 从连接中非阻塞地读取数据，并将数据存储到读取缓冲区中。
+     */
     void readNonBlocking();
+
+    /**
+     * @brief 尝试非阻塞地将发送缓冲区中的数据写入到连接中。
+     */
     void writeNonBlocking();
 };
