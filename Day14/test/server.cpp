@@ -1,28 +1,19 @@
-﻿#include <iostream>
+﻿#include "Server.h"
 #include "Buffer.h"
 #include "Connection.h"
-#include "Server.h"
 #include "Socket.h"
+#include <iostream>
 
-int main()
-{
-	Server *server = new Server();
+int main() {
+    Server *server = new Server("127.0.0.1", 1234);
 
-	server->onConnect([] (Connection *conn) {
-		// 新连接
-		std::cout << "[New Client " << conn->getSocket()->getFd() << " ]:\t\n";
-		});
-
-	server->onMessage([] (Connection *conn)
-		{
-			// Echo 服务器的业务
-			std::cout << "[Received from " << conn->getSocket()->getFd() << "]\t" << conn->getReadBuffer()->c_str() << std::endl;
-			if (conn->getState() == Connection::State::Connected)
-				conn->send(conn->getReadBuffer()->c_str());
-		});
+    server->setMessageCallback([](Connection *conn) {
+        std::cout << "Message from client " << conn->getId() << " : " << conn->getReadBuf()->c_str() << std::endl;
+        conn->send(conn->getReadBuf()->c_str());
+    });
 
 	server->start();
 
 	delete server;
-	return 0;
+    return 0;
 }
