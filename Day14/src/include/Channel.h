@@ -8,7 +8,7 @@ class Channel {
 public:
     // 禁止拷贝和移动
     DISALLOW_COPY_AND_MOVE(Channel);
-    explicit Channel(EventLoop *loop, int fd);
+    Channel(EventLoop *loop, int fd);
     ~Channel();
 
     /**

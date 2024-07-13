@@ -3,17 +3,26 @@
 #include <cstring>
 #include "Buffer.h"
 #include "Connection.h"
-#include "Socket.h"
 #include "ThreadPool.h"
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 using namespace std;
 
+static int cnt = 0;
+
 void oneClient(int msgs, int wait)
 {
-	Socket *sock = new Socket();
-	sock->socketCreate();
-	sock->socketConnect("127.0.0.1", 1234);
-	Connection *conn = new Connection(nullptr, sock->getFd());
+	std::cout << "Enter Test\n";
+	int fd = socket(AF_INET, SOCK_STREAM, 0);
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(1234);
+	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	bind(fd, (struct sockaddr *)&addr, sizeof(addr));
+	
+	Connection *conn = new Connection(nullptr, fd, cnt++);
 
 	sleep(wait);
 
@@ -21,19 +30,18 @@ void oneClient(int msgs, int wait)
 
 	while (count < msgs)
 	{
-		conn->setSentBuffer("Client：hello");
+		conn->setSentBuf("Client：hello");
 		conn->write();
-		if (conn->getState() == Connection::State::Closed)
+		if (conn->getState() == Connection::State::Disconnected)
 		{
-			conn->close();
+			conn->handleClose();
 			break;
 		}
 		conn->read();
-		std::cout << "[Msg From " << sock->getFd() << " Count " << count ++ << " ]\t" << conn->getReadBuffer()->c_str() << std::endl;
+		std::cout << "[Msg From " << fd << " Count " << count ++ << " ]\t" << conn->getReadBuf()->c_str() << std::endl;
 	}
 
 	delete conn;
-	delete sock;
 }
 
 int main(int argc, char *argv[])

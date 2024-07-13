@@ -1,6 +1,5 @@
 ﻿#include "Channel.h"
 #include "EventLoop.h"
-#include "Socket.h"
 #include <unistd.h>
 
 Channel::Channel(EventLoop *loop, int fd)

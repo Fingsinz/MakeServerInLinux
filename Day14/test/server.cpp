@@ -1,7 +1,6 @@
 ﻿#include "Server.h"
 #include "Buffer.h"
 #include "Connection.h"
-#include "Socket.h"
 #include <iostream>
 
 int main() {
@@ -12,8 +11,8 @@ int main() {
         conn->send(conn->getReadBuf()->c_str());
     });
 
-	server->start();
+    server->start();
 
-	delete server;
+    delete server;
     return 0;
 }

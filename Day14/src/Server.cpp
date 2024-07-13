@@ -2,7 +2,6 @@
 #include "Acceptor.h"
 #include "Connection.h"
 #include "EventLoop.h"
-#include "Socket.h"
 #include "ThreadPool.h"
 #include "util.h"
 #include <cassert>

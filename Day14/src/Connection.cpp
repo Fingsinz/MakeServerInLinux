@@ -1,7 +1,6 @@
 ﻿#include "Connection.h"
 #include "Buffer.h"
 #include "Channel.h"
-#include "Socket.h"
 #include "util.h"
 #include <Common.h>
 #include <cassert>
@@ -14,7 +13,7 @@ Connection::Connection(EventLoop *loop, int fd, int id)
         , mConnId(id)
         , mLoop(loop) {
     if (loop != nullptr) {
-        mChannel = std::make_unique<Channel>(mConnfd, loop);
+        mChannel = std::make_unique<Channel>(loop, mConnfd);
         mChannel->useET();
         mChannel->setReadCallback(std::bind(&Connection::handleMessage, this));
         mChannel->enableRead();
@@ -29,22 +28,25 @@ Connection::~Connection() {
 FLAG Connection::read() {
     mReadBuf->clear();
     readNonBlocking();
+    return FLAG::FL_SUCCESS;
 }
 
 FLAG Connection::write() {
     writeNonBlocking();
     mSendBuf->clear();
+    return FLAG::FL_SUCCESS;
 }
 
 FLAG Connection::send(std::string msg) {
     setSentBuf(msg.c_str());
     write();
-    return FL_SUCCESS;
+    return FLAG::FL_SUCCESS;
 }
 
 FLAG Connection::sent(char const *msg) {
     setSentBuf(msg);
     write();
+    return FLAG::FL_SUCCESS;
 }
 
 void Connection::setOnMessageCallback(std::function<void(Connection *)> const &callback) {
