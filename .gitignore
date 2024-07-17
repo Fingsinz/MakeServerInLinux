@@ -367,4 +367,4 @@ FodyWeavers.xsd
 *.sln
 
 .vscode
-build/*
+build
