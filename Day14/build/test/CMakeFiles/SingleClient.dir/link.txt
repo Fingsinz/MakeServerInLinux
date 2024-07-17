@@ -1,0 +1,1 @@
+/usr/bin/clang++     CMakeFiles/SingleClient.dir/SingleClient.cpp.o  -o ../bin/SingleClient -Wl,-rpath,/home/fingsinz/MakeServerInLinux/Day14/build/src ../src/libnetwork_shared.so 
