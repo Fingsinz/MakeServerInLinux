@@ -16,25 +16,9 @@ public:
     Epoll();
     ~Epoll();
 
-    /**
-     * @brief 更新Channel
-     * @param channel 指定Channel
-     * @return 操作标记FLAG
-     */
     FLAG updateChannel(Channel *channel) const;
-
-    /**
-     * @brief 删除Channel
-     * @param channel 指定Channel
-     * @return 操作标记FLAG
-     */
     FLAG deleteChannel(Channel *channel) const;
 
-    /**
-     * @brief poll操作
-     * @param timeout 超时
-     * @return 调用完epoll_wait的通道事件
-     */
     std::vector<Channel *> poll(int timeout = -1) const;
 
 private:

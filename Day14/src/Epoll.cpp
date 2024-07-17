@@ -1,8 +1,10 @@
 ﻿#include "Epoll.h"
 #include "Channel.h"
+#include "Socket.h"
 #include "util.h"
 #include <cstring>
 #include <unistd.h>
+
 
 constexpr int maxEvents = 1024;
 
@@ -29,7 +31,15 @@ std::vector<Channel *> Epoll::poll(int timeout) const {
         Channel *channel = (Channel *)mEvents[i].data.ptr;
         int events = mEvents[i].events;
 
-        channel->setReadyEvents(events);
+        if (events & EPOLLIN)
+            channel->setReadyEvents(EPOLLIN);
+
+        if (events & EPOLLOUT)
+            channel->setReadyEvents(EPOLLOUT);
+
+        if (events & EPOLLET)
+            channel->setReadyEvents(EPOLLET);
+
         activeEvents.push_back(channel);
     }
 
@@ -42,18 +52,27 @@ FLAG Epoll::updateChannel(Channel *channel) const {
     bzero(&ev, sizeof(ev));
     ev.data.ptr = channel;
 
-    if (!channel->isInEpoll()) {
+    if (channel->getListenEvents() & EPOLLIN)
+        ev.events |= EPOLLIN | EPOLLPRI;
+
+    if (channel->getListenEvents() & EPOLLOUT)
+        ev.events |= EPOLLOUT;
+
+    if (channel->getListenEvents() & EPOLLET)
+        ev.events |= EPOLLET;
+
+    if (!channel->getExist()) {
         errorif(epoll_ctl(mEpFd, EPOLL_CTL_ADD, fd, &ev) == -1, "[Error]\tEpoll add error");
-        channel->setInEpoll(true);
+        channel->setExist(true);
     } else
         errorif(epoll_ctl(mEpFd, EPOLL_CTL_MOD, fd, &ev) == -1, "[Error]\tEpoll update error");
 
-    return FLAG::FL_SUCCESS;
+    return FL_SUCCESS;
 }
 
 FLAG Epoll::deleteChannel(Channel *channel) const {
     int fd = channel->getFd();
     errorif(epoll_ctl(mEpFd, EPOLL_CTL_DEL, fd, nullptr) == -1, "[Error]\tEpoll delete error");
-    channel->setInEpoll(false);
-    return FLAG::FL_SUCCESS;
+    channel->setExist(false);
+    return FL_SUCCESS;
 }

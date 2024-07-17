@@ -1,73 +1,38 @@
 ﻿#include "Acceptor.h"
 #include "Channel.h"
-#include "EventLoop.h"
-#include "util.h"
-#include <arpa/inet.h>
+#include "Server.h"
+#include "Socket.h"
 #include <cassert>
-#include <cstring>
 #include <fcntl.h>
 #include <iostream>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
-Acceptor::Acceptor(EventLoop *loop, std::string const &ip, int const port)
-        : mLoop(loop)
-        , mListenFd(-1) {
-    socketCreate();
-    socketBind(ip, port);
-    socketListen();
+Acceptor::Acceptor(EventLoop *loop) {
+    mSocket = std::make_unique<Socket>();
+    assert(mSocket->socketCreate() == FL_SUCCESS);
+    assert(mSocket->socketBind("127.0.0.1", 1234) == FL_SUCCESS);
+    assert(mSocket->socketListen() == FL_SUCCESS);
 
-    mChannel = std::make_unique<Channel>(loop, mListenFd);
+    mChannel = std::make_unique<Channel>(loop, mSocket->getFd());
     std::function<void()> cb = std::bind(&Acceptor::acceptConnection, this);
 
     mChannel->setReadCallback(cb);
     mChannel->enableRead();
 }
 
-Acceptor::~Acceptor() {
-    mLoop->deleteChannel(mChannel.get());
-    ::close(mListenFd);
-}
-
-void Acceptor::socketCreate() {
-    assert(mListenFd == -1);
-    mListenFd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
-    errorif(mListenFd == -1, "[Error]\t Socket Create failed");
-}
-
-void Acceptor::socketBind(std::string const &ip, int const port) {
-    struct sockaddr_in addr;
-    bzero(&addr, sizeof(addr));
-
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(ip.c_str());
-    addr.sin_port = htons(port);
-    if (::bind(mListenFd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        errorif(true, "[Error]\t Socket Bind failed");
-    }
-}
-
-void Acceptor::socketListen() {
-    assert(mListenFd != -1);
-    if (::listen(mListenFd, SOMAXCONN) == -1) {
-        errorif(true, "[Error]\t Socket Listen failed");
-    }
-}
+Acceptor::~Acceptor() {}
 
 FLAG Acceptor::acceptConnection() const {
-    assert(mListenFd != -1);
+    int clientFd = -1;
 
-    struct sockaddr_in client;
-    socklen_t len = sizeof(client);
+    //通过使用客户端地址接受来自服务器套接字的连接，创建一个新的Socket对象
+    if (mSocket->socketAccept(clientFd) != FL_SUCCESS)
+        return FL_ACCEPTOR_ERROR;
 
-    int clientFd = ::accept4(mListenFd, (struct sockaddr *)&client, &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
-
-    errorif(clientFd == -1, "[Error]\t Accept failed");
+    // 新接受的连接设置为非阻塞
+    fcntl(clientFd, F_SETFL, fcntl(clientFd, F_GETFL) | O_NONBLOCK);
 
     if (mNewConnectionCallback)
         mNewConnectionCallback(clientFd);
-
     return FL_SUCCESS;
 }
 

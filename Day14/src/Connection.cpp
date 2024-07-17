@@ -1,148 +1,208 @@
 ﻿#include "Connection.h"
 #include "Buffer.h"
 #include "Channel.h"
+#include "Socket.h"
 #include "util.h"
-#include <Common.h>
 #include <cassert>
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
 
-Connection::Connection(EventLoop *loop, int fd, int id)
-        : mConnfd(fd)
-        , mConnId(id)
-        , mLoop(loop) {
+
+Connection::Connection(EventLoop *loop, int fd) {
+    mSocket = std::make_unique<Socket>();
+    mSocket->setFd(fd);
+
     if (loop != nullptr) {
-        mChannel = std::make_unique<Channel>(loop, mConnfd);
+        mChannel = std::make_unique<Channel>(loop, fd);
         mChannel->useET();
-        mChannel->setReadCallback(std::bind(&Connection::handleMessage, this));
         mChannel->enableRead();
     }
-    mReadBuf = std::make_unique<Buffer>();
-    mSendBuf = std::make_unique<Buffer>();
-}
-Connection::~Connection() {
-    ::close(mConnfd);
+    mReadBuffer = std::make_unique<Buffer>();
+    mSendBuffer = std::make_unique<Buffer>();
+
+    mState = State::Connected;
 }
 
+Connection::~Connection() {}
+
 FLAG Connection::read() {
-    mReadBuf->clear();
-    readNonBlocking();
-    return FLAG::FL_SUCCESS;
+    if (mState != State::Connected) {
+        errorif(true, "[Error]\tConnection state is disconnected!");
+        return FL_CONNECTION_ERROR;
+    }
+    assert(mState == State::Connected and "[Error]\tConnection state is disconnected!");
+
+    mReadBuffer->clear();
+    if (mSocket->isNonBlocking())
+        return readNonBlocking();
+    else
+        return readBlocking();
 }
 
 FLAG Connection::write() {
-    writeNonBlocking();
-    mSendBuf->clear();
-    return FLAG::FL_SUCCESS;
+    if (mState != State::Connected) {
+        errorif(true, "[Error]\tConnection state is disconnected!");
+        return FL_CONNECTION_ERROR;
+    }
+    FLAG flag = FL_UNDIFINED;
+
+    if (mSocket->isNonBlocking())
+        flag = writeNonBlocking();
+    else
+        flag = writeBlocking();
+
+    mSendBuffer->clear();
+    return flag;
 }
 
 FLAG Connection::send(std::string msg) {
-    setSentBuf(msg.c_str());
+    setSentBuffer(msg.c_str());
     write();
-    return FLAG::FL_SUCCESS;
+    return FL_SUCCESS;
 }
 
-FLAG Connection::sent(char const *msg) {
-    setSentBuf(msg);
-    write();
-    return FLAG::FL_SUCCESS;
+void Connection::setDeleteConnectionCallback(std::function<void(int)> const &callback) {
+    mDeleteConnectionCallback = std::move(callback);
 }
 
 void Connection::setOnMessageCallback(std::function<void(Connection *)> const &callback) {
-    onMessageCb = std::move(callback);
+    mOnMessageCallback = std::move(callback);
+    std::function<void()> busi = std::bind(&Connection::business, this);
+    mChannel->setReadCallback(busi);
 }
 
-void Connection::setOnCloseCallback(std::function<void(int)> const &callback) {
-    onCloseCb = std::move(callback);
-}
-
-void Connection::setSentBuf(char const *str) {
-    mSendBuf->setBuf(str);
-}
-
-Buffer *Connection::getReadBuf() {
-    return mReadBuf.get();
-}
-
-Buffer *Connection::getSentBuf() {
-    return mSendBuf.get();
-}
-
-void Connection::handleMessage() {
+void Connection::business() {
     read();
-    if (onCloseCb) {
-        onMessageCb(this);
-    }
+    mOnMessageCallback(this);
 }
 
-void Connection::handleClose() {
-    if (mState != State::Disconnected) {
-        mState = State::Disconnected;
-        if (onCloseCb) {
-            onCloseCb(mConnId);
-        }
-    }
-}
-
-Connection::State Connection::getState() const {
+Connection::State Connection::getState() {
     return mState;
 }
 
-EventLoop *Connection::getLoop() const {
-    return mLoop;
+void Connection::close() {
+    mDeleteConnectionCallback(mSocket->getFd());
 }
 
-int Connection::getFd() const {
-    return mConnfd;
+void Connection::setSentBuffer(char const *str) {
+    mSendBuffer->setBuf(str);
 }
 
-int Connection::getId() const {
-    return mConnId;
+Buffer *Connection::getReadBuffer() {
+    return mReadBuffer.get();
 }
 
-void Connection::readNonBlocking() {
-    char buf[1026];
+Buffer *Connection::getSendBuffer() {
+    return mSendBuffer.get();
+}
+
+Socket *Connection::getSocket() {
+    return mSocket.get();
+}
+
+FLAG Connection::readNonBlocking() {
+    int sockfd = mSocket->getFd();
+    char buf[1024];
+
     while (true) {
-        memset(buf, 0, sizeof(buf));
-        ssize_t bytesRead = ::read(mConnfd, buf, sizeof(buf));
+        bzero(buf, sizeof(buf));
+        ssize_t readLen = ::read(sockfd, buf, sizeof(buf));
 
-        if (bytesRead > 0) {
-            mReadBuf->append(buf, bytesRead);
-        } else if (bytesRead == -1 and errno == EINTR) {
+        if (readLen > 0)
+            mReadBuffer->append(buf, readLen);
+
+        // 客户端正常中断、继续读取
+        else if (readLen == -1 and errno == EINTR) {
+            std::cout << "[Continue Reading]\n";
             continue;
-        } else if (bytesRead == -1 and (errno == EAGAIN or errno == EWOULDBLOCK)) {
+        }
+
+        // 非阻塞 IO，表示数据全部读取完毕
+        else if (readLen == -1 and ((errno == EAGAIN) or (errno == EWOULDBLOCK))) {
             break;
-        } else if (bytesRead == 0) {
-            handleClose();
+        }
+
+        // EOF，表示客户端断开连接
+        else if (readLen == 0) {
+            std::cout << "[Client " << sockfd << " disconnected]\n";
+            mState = State::Closed;
+            // close();	// 启用这句会段错误
             break;
-        } else {
-            handleClose();
+        }
+
+        else {
+            std::cout << "[Error]\tOther error on client fd: " << sockfd << "\n";
+            mState = State::Closed;
+            close();
             break;
         }
     }
+    return FL_SUCCESS;
 }
 
-void Connection::writeNonBlocking() {
-    char buf[mSendBuf->size()];
+FLAG Connection::readBlocking() {
+    int sockfd = mSocket->getFd();
+    ssize_t dataSize = mSocket->recvBufSize();
+    char buf[1024];
+    ssize_t readLen = ::read(sockfd, buf, sizeof(buf));
 
-    memcpy(buf, mSendBuf->c_str(), mSendBuf->size());
+    if (readLen > 0) {
+        mReadBuffer->append(buf, readLen);
+    }
 
-    int dataSize = mSendBuf->size();
+    // 客户端断开连接
+    else if (readLen == 0) {
+        std::cout << "[Client " << sockfd << " ]\tdisconnected\n";
+        mState = State::Closed;
+    }
+
+    else if (readLen == -1) {
+        std::cout << "[Error]\tOther error on client fd: " << sockfd << "\n";
+        mState = State::Closed;
+    }
+
+    return FL_SUCCESS;
+}
+
+FLAG Connection::writeNonBlocking() {
+    int sockfd = mSocket->getFd();
+    char *buf = new char[mSendBuffer->size()];
+    memcpy(buf, mSendBuffer->c_str(), mSendBuffer->size());
+    int dataSize = mSendBuffer->size();
     int dataLeft = dataSize;
 
     while (dataLeft > 0) {
-        ssize_t bytesWrite = ::write(mConnfd, buf + dataSize - dataLeft, dataLeft);
+        ssize_t writeLen = ::write(sockfd, buf + dataSize - dataLeft, dataLeft);
 
-        if (bytesWrite == -1 and errno == EINTR) {
+        if (writeLen == -1 and errno == EINTR) {
+            std::cout << "[Continue Writing]\n";
             continue;
-        } else if (bytesWrite == -1 and errno == EAGAIN) {
-            break;
-        } else if (bytesWrite == -1) {
-            handleClose();
-            break;
-        } else {
-            dataLeft -= bytesWrite;
         }
+
+        if (writeLen == -1 and errno == EAGAIN)
+            break;
+
+        if (writeLen == -1) {
+            std::cout << "[Error]\tOther error on client fd: " << sockfd << "\n";
+            mState = State::Closed;
+            break;
+        }
+        dataLeft -= writeLen;
     }
+
+    delete[] buf;
+    return FL_SUCCESS;
+}
+
+FLAG Connection::writeBlocking() {
+    // 没有处理 mSendBuffer 数据大于TCP写缓冲区的情况，可能会有bug
+    int sockfd = mSocket->getFd();
+    ssize_t writeLen = ::write(sockfd, mSendBuffer->c_str(), mSendBuffer->size());
+
+    if (writeLen == -1) {
+        std::cout << "[Error]\tOther error on client fd: " << sockfd << "\n";
+        mState = State::Closed;
+    }
+    return FL_SUCCESS;
 }

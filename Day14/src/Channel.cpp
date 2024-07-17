@@ -1,5 +1,6 @@
 ﻿#include "Channel.h"
 #include "EventLoop.h"
+#include "Socket.h"
 #include <unistd.h>
 
 Channel::Channel(EventLoop *loop, int fd)
@@ -7,29 +8,22 @@ Channel::Channel(EventLoop *loop, int fd)
         , mLoop(loop)
         , mListenEvents(0)
         , mReadyEvents(0)
-        , inEpoll(false) {}
+        , exist(false) {}
 
 Channel::~Channel() {
-    if (mFd != -1) {
-        close(mFd);
-        mFd = -1;
-    }
+    mLoop->deleteChannel(this);
 }
 
 void Channel::handleEvent() const {
-    if (mReadyEvents & (EPOLLIN or EPOLLPRI or EPOLLRDHUP))
-        if (readCallback) {
-            readCallback();
-        }
+    if (mReadyEvents & EPOLLIN)
+        readCallback();
 
     if (mReadyEvents & EPOLLOUT)
-        if (writeCallback) {
-            writeCallback();
-        }
+        writeCallback();
 }
 
 void Channel::enableRead() {
-    mListenEvents |= (EPOLLIN or EPOLLPRI);
+    mListenEvents |= EPOLLIN;
     mLoop->updateChannel(this);
 }
 
@@ -56,15 +50,20 @@ uint32_t Channel::getReadyEvents() const {
 }
 
 void Channel::setReadyEvents(uint32_t events) {
-    mReadyEvents = events;
+    if (events & EPOLLIN)
+        mReadyEvents |= EPOLLIN;
+    if (events & EPOLLOUT)
+        mReadyEvents |= EPOLLOUT;
+    if (events & EPOLLET)
+        mReadyEvents |= EPOLLET;
 }
 
-bool Channel::isInEpoll() const {
-    return inEpoll;
+bool Channel::getExist() const {
+    return exist;
 }
 
-void Channel::setInEpoll(bool in) {
-    inEpoll = in;
+void Channel::setExist(bool _exist) {
+    exist = _exist;
 }
 
 void Channel::setReadCallback(std::function<void()> const &callback) {

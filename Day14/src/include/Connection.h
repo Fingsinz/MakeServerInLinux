@@ -13,121 +13,113 @@ class Connection {
 public:
     enum State {
         Invalid = 0, // 初始无效状态
+        Handshaking, // 握手过程中的状态
         Connected,   // 连接建立
-        Disconnected
+        Closed,      // 连接关闭
+        Failed,      // 连接失败
     };
 
 public:
-    // 禁止拷贝和移动
-    DISALLOW_COPY_AND_MOVE(Connection);
-    explicit Connection(EventLoop *loop, int fd, int id);
+    explicit Connection(EventLoop *loop, int fd);
     ~Connection();
 
+    // 禁止拷贝和移动
+    DISALLOW_COPY_AND_MOVE(Connection);
+
     /**
-     * @brief 读操作
+     * @brief 从与连接相关联的套接字读取数据
+     *
      * @return FLAG 操作结果标记
      */
     FLAG read();
 
     /**
-     * @brief 写操作
+     * @brief 将数据写入与该连接相关联的套接字
+     *
      * @return FLAG 操作结果标记
      */
     FLAG write();
 
     /**
      * @brief 通过连接发送消息
+     *
      * @param msg 要发送的消息
      * @return FLAG 操作结果标记
      */
     FLAG send(std::string msg);
 
-    FLAG sent(char const *msg);
-
     /**
      * @brief 设置一个回调函数，在连接上接收到消息时调用
+     *
      * @param callback 回调函数
      */
     void setOnMessageCallback(std::function<void(Connection *)> const &callback);
 
     /**
-     * @brief 设置一个回调函数，在需要断开连接时调用
+     * @brief 设置一个回调函数，在需要删除连接时调用
+     *
      * @param callback 回调函数
      */
-    void setOnCloseCallback(std::function<void(int)> const &callback);
+    void setDeleteConnectionCallback(std::function<void(int)> const &callback);
 
     /**
-     * @brief 设置发送缓冲区
-     * @param str 指向要设置为发送缓冲区的字符串的常量指针。
+     * @brief 与连接关联的业务逻辑
      */
-    void setSentBuf(char const *str);
+    void business();
 
     /**
-     * @brief 获取读取缓冲区的指针
-     * @return Buffer* 返回读取缓冲区的指针。
+     * @brief 获取连接的状态
+     *
+     * @return 状态
      */
-    Buffer *getReadBuf();
+    State getState();
 
     /**
-     * @brief 获取发送缓冲区的指针
-     * @return Buffer* 返回发送缓冲区的指针。
+     * @brief 关闭这个连接
      */
-    Buffer *getSentBuf();
+    void close();
 
     /**
-     * @brief 处理接收到的消息
+     * @brief 设置要通过连接发送的缓冲区
+     *
+     * @param str 要发送的缓冲区
      */
-    void handleMessage();
+    void setSentBuffer(char const *str);
 
     /**
-     * @brief 处理连接关闭事件
+     * @brief 获取与该连接关联的读缓冲区
+     *
+     * @return 指向读缓冲区的指针
      */
-    void handleClose();
+    Buffer *getReadBuffer();
 
     /**
-     * @brief 获取当前状态
-     * @return State 返回当前状态。
+     * @brief 获取与该连接关联的发送缓冲区
+     *
+     * @return 指向写缓冲区的指针
      */
-    State getState() const;
+    Buffer *getSendBuffer();
 
     /**
-     * @brief 获取事件循环的指针
-     * @return EventLoop* 返回事件循环的指针。
+     * @brief 获取与该连接关联的套接字
+     *
+     * @return Socket指针
      */
-    EventLoop *getLoop() const;
-
-    /**
-     * @brief 获取文件描述符
-     * @return int 返回文件描述符。
-     */
-    int getFd() const;
-
-    /**
-     * @brief 获取唯一标识符
-     * @return int 返回唯一标识符。
-     */
-    int getId() const;
+    Socket *getSocket();
 
 private:
-    int mConnfd;      // 连接的文件描述符
-    int mConnId;      // 连接的唯一标识符
-    State mState;     // 当前连接的状态
-    EventLoop *mLoop; // 所属的事件循环
+    // EventLoop *mLoop;							// EventLoop指针
+    std::unique_ptr<Socket> mSocket;              // Socket指针
+    std::unique_ptr<Channel> mChannel{nullptr};   // Channel指针
+    std::unique_ptr<Buffer> mReadBuffer{nullptr}; // 读缓冲区
+    std::unique_ptr<Buffer> mSendBuffer{nullptr}; // 写缓冲区
 
-    std::unique_ptr<Channel> mChannel; // 用于监听连接上的事件
-    std::unique_ptr<Buffer> mReadBuf;  // 用于存储读取的数据
-    std::unique_ptr<Buffer> mSendBuf;  // 用于存储待发送的数据
+    State mState{Invalid};                                // 连接状态
+    std::function<void(int)> mDeleteConnectionCallback;   // 删除连接的回调函数
+    std::function<void(Connection *)> mOnMessageCallback; // 业务逻辑回调函数
 
-    std::function<void(int)> onCloseCb;            // 连接关闭时的回调函数
-    std::function<void(Connection *)> onMessageCb; // 接收到消息时的回调函数
-
-    /**
-     * @brief 从连接中非阻塞地读取数据，并将数据存储到读取缓冲区中。
-     */
-    void readNonBlocking();
-
-    /**
-     * @brief 尝试非阻塞地将发送缓冲区中的数据写入到连接中。
-     */
-    void writeNonBlocking();
+    FLAG readNonBlocking();  // 非阻塞读
+    FLAG writeNonBlocking(); // 非阻塞写
+    FLAG readBlocking();     // 阻塞读
+    FLAG writeBlocking();    // 阻塞写
 };

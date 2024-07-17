@@ -8,5 +8,5 @@ file(GLOB_RECURSE network_sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
 # 设置共享库链接选项
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}  -fPIC -pthread")
 
-# 使用源文件创建一个的共享库
+# 使用源文件创建一个名为day12_shared的共享库
 add_library(network_shared SHARED ${network_sources})

@@ -2,20 +2,19 @@
 #include "Acceptor.h"
 #include "Connection.h"
 #include "EventLoop.h"
+#include "Socket.h"
 #include "ThreadPool.h"
 #include "util.h"
-#include <cassert>
 #include <functional>
-#include <iostream>
 #include <unistd.h>
+
 
 constexpr int READ_BUFFER = 1024;
 
-Server::Server(std::string const &ip, int const port)
-        : nextConnId(1) {
+Server::Server() {
     mainReactor = std::make_unique<EventLoop>();
-    acceptor = std::make_unique<Acceptor>(mainReactor.get(), ip, port);
-    std::function<void(int)> cb = std::bind(&Server::handleNewConnection, this, std::placeholders::_1);
+    acceptor = std::make_unique<Acceptor>(mainReactor.get());
+    std::function<void(int)> cb = std::bind(&Server::newConnection, this, std::placeholders::_1);
     acceptor->setNewConnectionCallback(cb);
 
     unsigned int size = std::thread::hardware_concurrency();
@@ -32,45 +31,39 @@ Server::~Server() {}
 void Server::start() {
     for (size_t i = 0; i < subReactors.size(); ++i) {
         std::function<void()> subLoop = std::bind(&EventLoop::loop, subReactors[i].get());
-        threadPool->add(subLoop);
+        threadPool->add(std::move(subLoop));
     }
     mainReactor->loop();
 }
 
-void Server::setConnectionCallback(std::function<void(Connection *)> const &cb) {
-    onConnectCallback = std::move(cb);
+void Server::onConnect(std::function<void(Connection *)> fn) {
+    onConnectionCallback = std::move(fn);
 }
 
-void Server::setMessageCallback(std::function<void(Connection *)> const &cb) {
-    onMessageCallback = std::move(cb);
+void Server::onMessage(std::function<void(Connection *)> fn) {
+    onMessageCallback = std::move(fn);
 }
 
-void Server::handleNewConnection(int fd) {
-    assert(fd != -1);
-    std::cout << "[INFO]\tNew Connection, fd: " << fd << std::endl;
-
+FLAG Server::newConnection(int fd) {
+    errorif(fd == -1, "[Error]\t New Connection error");
     uint64_t random = fd % subReactors.size();
+    std::unique_ptr<Connection> conn = std::make_unique<Connection>(subReactors[random].get(), fd);
+    std::function<void(int)> cb = std::bind(&Server::deleteConnection, this, std::placeholders::_1);
 
-    Connection *conn = new Connection(subReactors[random].get(), fd, nextConnId);
-    std::function<void(int)> cb = std::bind(&Server::handleClose, this, std::placeholders::_1);
-
-    conn->setOnCloseCallback(cb);
+    conn->setDeleteConnectionCallback(cb);
     conn->setOnMessageCallback(onMessageCallback);
 
-    connections[fd] = conn;
+    connections[fd] = std::move(conn);
 
-    ++nextConnId;
-    if (nextConnId == 1000) {
-        nextConnId = 1;
-    }
+    if (onConnectionCallback)
+        onConnectionCallback(connections[fd].get());
+    return FL_SUCCESS;
 }
 
-void Server::handleClose(int fd) {
-	auto it = connections.find(fd);
-	if (it != connections.end()) {
-		// delete it->second;
-		// 没有析构，所以在这里进行了 close，先关闭连接
-		::close(fd);
-		connections.erase(it);
-	}
+FLAG Server::deleteConnection(int fd) {
+    auto it = connections.find(fd);
+    if (it != connections.end()) {
+        connections.erase(fd);
+    }
+    return FL_SUCCESS;
 }

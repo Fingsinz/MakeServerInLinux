@@ -10,6 +10,7 @@ class Epoll;
 class EventLoop;
 class InetAddress;
 class Server;
+class Socket;
 class ThreadPool;
 
 #define DISALLOW_COPY(className)                                                                                       \
