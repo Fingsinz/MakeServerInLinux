@@ -1,1 +1,0 @@
-/usr/bin/clang++     CMakeFiles/server.dir/server.cpp.o  -o ../bin/server -Wl,-rpath,/home/fingsinz/MakeServerInLinux/Day14/build/src ../src/libnetwork_shared.so 
